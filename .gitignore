@@ -6,3 +6,5 @@ build*/
 **/state/
 **/snapshots/
 **/__pycache__/
+cache/
+watersheds/*/deployments/*/forcing/

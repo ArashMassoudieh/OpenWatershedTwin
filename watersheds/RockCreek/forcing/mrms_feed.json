@@ -1,0 +1,11 @@
+{
+  "units_geojson": "../gis/subcatchments.geojson",
+  "unit_id_field": "id",
+  "output_dir": "../deployments/live/forcing",
+  "file_pattern": "rain_{id}.csv",
+  "cache_dir": "../../../cache/mrms",
+  "weights_file": "mrms_weights.json",
+  "window_days": 30,
+  "mrms_scale": 1.15,
+  "openmeteo": {"forecast_days": 10, "scale": 1.0}
+}
