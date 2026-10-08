@@ -1,0 +1,161 @@
+{
+ "title": "Rock Creek digital twin (sample data)",
+ "layers": {
+  "units": {
+   "url": "gis/subcatchments.geojson",
+   "id_field": "id",
+   "label_field": "id"
+  },
+  "reaches": {
+   "url": "gis/reaches.geojson",
+   "id_field": "id",
+   "width_field": "drainage_area_km2"
+  },
+  "points": {
+   "url": "gis/control_points.geojson",
+   "id_field": "id",
+   "label_field": "name",
+   "gage_filter_field": "calibration"
+  },
+  "boundary": {
+   "url": "gis/watershed_boundary.geojson"
+  }
+ },
+ "outputs": "outputs/",
+ "elements": [
+  {
+   "id": "Catchment",
+   "label": "Pervious surface",
+   "variables": [
+    {
+     "id": "ponding",
+     "label": "Ponded depth",
+     "unit": "mm",
+     "min": 0,
+     "max": 5,
+     "palette": "depth"
+    }
+   ]
+  },
+  {
+   "id": "Impervious_Catchment",
+   "label": "Impervious surface",
+   "variables": [
+    {
+     "id": "ponding",
+     "label": "Ponded depth",
+     "unit": "mm",
+     "min": 0,
+     "max": 2,
+     "palette": "depth"
+    }
+   ]
+  },
+  {
+   "id": "Reach",
+   "label": "Pervious reach",
+   "variables": [
+    {
+     "id": "storage",
+     "label": "Storage",
+     "unit": "m3",
+     "palette": "flow"
+    }
+   ]
+  },
+  {
+   "id": "Impervious_Reach",
+   "label": "Impervious reach",
+   "variables": [
+    {
+     "id": "storage",
+     "label": "Storage",
+     "unit": "m3",
+     "palette": "flow"
+    }
+   ]
+  },
+  {
+   "id": "Soil_1",
+   "label": "Soil 1",
+   "variables": [
+    {
+     "id": "moisture",
+     "label": "Moisture content",
+     "unit": "-",
+     "min": 0.05,
+     "max": 0.45,
+     "palette": "moisture"
+    }
+   ]
+  },
+  {
+   "id": "Soil_2",
+   "label": "Soil 2",
+   "variables": [
+    {
+     "id": "moisture",
+     "label": "Moisture content",
+     "unit": "-",
+     "min": 0.05,
+     "max": 0.45,
+     "palette": "moisture"
+    }
+   ]
+  },
+  {
+   "id": "Soil_3",
+   "label": "Soil 3",
+   "variables": [
+    {
+     "id": "moisture",
+     "label": "Moisture content",
+     "unit": "-",
+     "min": 0.05,
+     "max": 0.45,
+     "palette": "moisture"
+    }
+   ]
+  },
+  {
+   "id": "Groundwater",
+   "label": "Groundwater",
+   "variables": [
+    {
+     "id": "water_table",
+     "label": "Water table above stream bed",
+     "unit": "m",
+     "min": -1,
+     "max": 3,
+     "palette": "head"
+    }
+   ]
+  },
+  {
+   "id": "Near_Stream_Aquifer",
+   "label": "Near-stream aquifer",
+   "variables": [
+    {
+     "id": "water_table",
+     "label": "Water table above stream bed",
+     "unit": "m",
+     "min": -1,
+     "max": 3,
+     "palette": "head"
+    }
+   ]
+  },
+  {
+   "id": "Stream",
+   "label": "Stream",
+   "variables": [
+    {
+     "id": "storage",
+     "label": "Channel storage",
+     "unit": "m3",
+     "palette": "flow"
+    }
+   ]
+  }
+ ]
+}

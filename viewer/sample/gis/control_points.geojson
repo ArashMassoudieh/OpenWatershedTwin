@@ -1,0 +1,18 @@
+{
+"type": "FeatureCollection",
+"name": "control_points",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": "01647685", "kind": "gage", "name": "Williamsburg Run nr Olney", "da_mi2": 2.25, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.0963681, 39.1423296 ] } },
+{ "type": "Feature", "properties": { "id": "01647720", "kind": "gage", "name": "N Br Rock Cr nr Norbeck", "da_mi2": 9.73, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.1022014, 39.1164967 ] } },
+{ "type": "Feature", "properties": { "id": "01647725", "kind": "gage", "name": "Manor Run nr Norbeck", "da_mi2": 1.01, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.0997013, 39.11010796 ] } },
+{ "type": "Feature", "properties": { "id": "01647740", "kind": "gage", "name": "N Br Rock Cr nr Rockville", "da_mi2": 12.5, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.1197016, 39.10260807 ] } },
+{ "type": "Feature", "properties": { "id": "01647850", "kind": "gage", "name": "Turkey Branch nr Rockville", "da_mi2": 2.74, "model_segment": null, "calibration": true }, "geometry": { "type": "Point", "coordinates": [ -77.08175, 39.068472 ] } },
+{ "type": "Feature", "properties": { "id": "01648000", "kind": "gage", "name": "Rock Creek at Sherrill Dr", "da_mi2": 62.2, "model_segment": null, "calibration": true }, "geometry": { "type": "Point", "coordinates": [ -77.04, 38.9725 ] } },
+{ "type": "Feature", "properties": { "id": "01648010", "kind": "gage", "name": "Rock Creek at Joyce Rd", "da_mi2": 63.7, "model_segment": null, "calibration": true }, "geometry": { "type": "Point", "coordinates": [ -77.042056, 38.960167 ] } },
+{ "type": "Feature", "properties": { "id": "01648011", "kind": "gage", "name": "Luzon Branch", "da_mi2": 1.03, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.04138889, 38.96169444 ] } },
+{ "type": "Feature", "properties": { "id": "01649000", "kind": "gage", "name": "Rock Creek at Q St", "da_mi2": 75.8, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.0513661, 38.9112226 ] } },
+{ "type": "Feature", "properties": { "id": "MD00046", "kind": "dam", "name": "Lake Needwood", "da_mi2": 12.8, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.1295, 39.114 ] } },
+{ "type": "Feature", "properties": { "id": "MD00050", "kind": "dam", "name": "Lake Frank", "da_mi2": 12.2, "model_segment": null, "calibration": false }, "geometry": { "type": "Point", "coordinates": [ -77.1183, 39.1033 ] } }
+]
+}
