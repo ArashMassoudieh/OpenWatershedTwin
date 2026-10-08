@@ -1,0 +1,8 @@
+build*/
+*.user
+*.o
+*.so
+**/outputs/
+**/state/
+**/snapshots/
+**/__pycache__/

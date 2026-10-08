@@ -1,0 +1,6 @@
+[submodule "OpenHydroTwin"]
+	path = OpenHydroTwin
+	url = https://github.com/ArashMassoudieh/OHTwin.git
+[submodule "OpenHydroQual"]
+	path = OpenHydroQual
+	url = https://github.com/ArashMassoudieh/OpenHydroQual.git
