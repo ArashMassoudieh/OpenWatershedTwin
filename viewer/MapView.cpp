@@ -154,7 +154,14 @@ void MapView::setReaches(const QJsonDocument &doc, const QString &idField, const
         m.width = pr.value(widthField).toDouble(1.0);
         wmax = std::max(wmax, m.width);
         QJsonArray lines = g.value("coordinates").toArray();
-        if (g.value("type").toString() == "LineString") lines = QJsonArray{lines};
+        if (g.value("type").toString() == "LineString")
+        {
+            // wrap the single line explicitly: QJsonArray{lines} copies under Clang (WebAssembly build) but wraps
+            // under GCC, which left the browser's streams as one point at (0, 0)
+            QJsonArray wrapped;
+            wrapped.append(lines);
+            lines = wrapped;
+        }
         for (const QJsonValue &l : lines)
         {
             const QJsonArray pts = l.toArray();
