@@ -19,7 +19,8 @@ projected CRS), built once and stored as JSON next to the config. Missing cells 
 the rest renormalised; an hour with no valid cell over a unit is treated as missing.
 
 Bias factors (scale): `mrms_scale` and `openmeteo.scale` multiply the depths, e.g. to match the rainfall the model
-was calibrated with (Rock Creek: AORC is about 15 % wetter than MRMS, so mrms_scale = 1.15).
+was calibrated with (Rock Creek: over Oct 2024 - Sep 2025 AORC is 8.4 % wetter than the hourly MRMS Pass2 sums,
+1.02-1.08 for storm rain, more in light drizzle; mrms_scale = 1.08, see tools/mrms_bias.py).
 
 Usage:
   mrms_feed.py --config watersheds/RockCreek/forcing/mrms_feed.json             # live update
@@ -28,7 +29,7 @@ Config (paths relative to the config file):
   { "units_geojson": "../gis/subcatchments.geojson", "unit_id_field": "id",
     "output_dir": "../deployments/live/forcing", "file_pattern": "rain_{id}.csv",
     "cache_dir": "../../../cache/mrms", "weights_file": "mrms_weights.json",
-    "window_days": 30, "mrms_scale": 1.15,
+    "window_days": 30, "mrms_scale": 1.08,
     "openmeteo": {"forecast_days": 10, "scale": 1.0} }
 """
 import argparse

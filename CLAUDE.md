@@ -68,7 +68,7 @@ re-fetched as Pass2) from the AWS bucket noaa-mrms-pds (from Nov 2020; Pass2 ~1-
 0.01 deg with origin 130W/55N (checked), Rock Creek window 38 x 25 cells; area-weighted per unit; Open-Meteo forecast
 appended after the last MRMS hour; writes `rain_SCnn.csv` (`start,end,depth_m`, OHQ serials) + `rain_status.json`.
 Check vs AORC 15 Aug-15 Sep 2021 (incl. Ida): hourly r 0.97 per unit, daily 0.99, AORC/MRMS totals 1.06, Ida 60 mm
-both. `mrms_scale` = 1.15 is PROVISIONAL (from a 5-year daily-product comparison).
+both. `mrms_scale` = 1.08 (hourly product vs AORC, Oct 2024-Sep 2025, tools/mrms_bias.py; the earlier 1.15 came from the daily product).
 
 **Viewer** (commit 3723037): `MapView` (own local projection, wheel zoom about cursor, drag pan, double-click zoom,
 fit, hover tooltip, legend, labels by zoom), `ChartPanel` (QtCharts: rain on top, series, model vs USGS at gages,
@@ -134,7 +134,8 @@ Python: venv `~/.venvs/rockcreek` (geopandas, rasterio with GRIB2, requests, num
 ## Next steps (confirm with the user before each)
 
 1. When the backfill is done: first live run (spin-up 2024-10-01 -> now in one catch-up cycle), check against USGS;
-   AORC/MRMS bias from the overlap year Oct 2024-Sep 2025 -> mrms_scale (provisional 1.15).
+   (AORC/MRMS bias DONE 2026-10-09: tools/mrms_bias.py, overlap Oct 2024-Sep 2025, total 1.084, storms 1.02-1.08,
+   light rain <0.5 mm/h 1.59 -> mrms_scale 1.08; cache/mrms_history rescaled from 1.15.)
 2. Deploy to openhydrotwin.com (AWS, nginx static, systemd; path /RockCreek/; see
    OpenHydroTwin/HANDOFF_AWS_DEPLOY.md and deploy.sh): web/ + OWTViewer.html/.js/.wasm + qtloader.js.
 3. Browser build: right-click on a unit freezes (WASM only; desktop fine) - not yet diagnosed.
