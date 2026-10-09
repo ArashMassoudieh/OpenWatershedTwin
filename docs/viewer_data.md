@@ -59,7 +59,8 @@ the map variable, all variables of the element, all elements). `"log": true` giv
 `rain_source` (engine): the model rain source of a unit, e.g. `"P_{unit}"`; its forcing entry gives the rainfall
 chart (mm/h). `gages` (engine and viewer): per gage `id`, `name` and `series` (`id` `Q`/`H`, `label`, `unit`,
 `source`, `scale` as for variables, `observed`: a file `{gage}_flow.csv` in the observations folder, rows
-`t,value` in display units). `links` (viewer): toolbar buttons that open a URL, e.g. the model documentation:
+`t,value` in display units). `subtitle`, `credit` (page shell `viewer/index.html`): shown with the title and a drawing of the watershed while the
+WebAssembly viewer loads; `credit` may contain links. `links` (viewer): toolbar buttons that open a URL, e.g. the model documentation:
 `{"label": "Model documentation", "tooltip": "...", "url": "https://..."}`.
 
 `layers.masks` (optional): areas drawn hatched with a legend entry, e.g. the combined-sewer area that does not

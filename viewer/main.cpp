@@ -21,7 +21,9 @@ int main(int argc, char *argv[])
 
     QString base;
 #ifdef Q_OS_WASM
-    base = QString::fromStdString(emscripten::val::global("location")["href"].as<std::string>());
+    // the page's folder: origin + path, without query string or fragment
+    const emscripten::val loc = emscripten::val::global("location");
+    base = QString::fromStdString(loc["origin"].as<std::string>() + loc["pathname"].as<std::string>());
     base = base.left(base.lastIndexOf('/') + 1);
 #endif
     QCommandLineParser cl;

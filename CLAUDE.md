@@ -94,7 +94,7 @@ cmake -S build/kernels/<Name> -B build/kernels/<Name>/build -DCMAKE_BUILD_TYPE=R
 cd build/viewer-desktop && ~/Qt/6.8.2/gcc_64/bin/qmake ../../viewer/OWTViewer.pro && make -j16
 # viewer, WebAssembly (emsdk 3.1.56 matches Qt 6.8.2)
 source ~/emsdk/emsdk_env.sh && cd build/viewer-wasm && ~/Qt/6.8.2/wasm_singlethread/bin/qmake ../../viewer/OWTViewer.pro && make -j16
-# site = OWTViewer.html/.js/.wasm + qtloader.js + qtlogo.svg + contents of viewer/sample (or a deployment's web folder)
+# site = index.html + OWTViewer.js/.wasm + qtloader.js + contents of a deployment web folder (or viewer/sample)
 # MRMS feed
 ~/.venvs/rockcreek/bin/python tools/mrms_feed.py --config watersheds/RockCreek/forcing/mrms_feed.json
 ~/.venvs/rockcreek/bin/python tools/mrms_feed.py --config <cfg> --backfill 2024-10-01 2026-10-08 --no-forecast

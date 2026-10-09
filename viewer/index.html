@@ -1,0 +1,124 @@
+<!doctype html>
+<!--
+OpenWatershedTwin viewer: page shell for the WebAssembly build (replaces Qt's generated OWTViewer.html).
+
+While the viewer downloads, it draws the watershed from the twin's own files (viewer_config.json: title, subtitle,
+credit, layers.boundary and layers.reaches) with water flowing down the streams, so the same page serves any
+watershed. Reach lines must run upstream to downstream (as the twin's reaches.geojson does).
+-->
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, user-scalable=0"/>
+  <title>Watershed digital twin</title>
+  <style>
+    html, body { padding: 0; margin: 0; overflow: hidden; height: 100%; background: #f5f4f0; }
+    #screen { width: 100%; height: 100%; display: none; }
+    #splash { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+              font-family: Helvetica, Arial, sans-serif; color: #1f2d3d; transition: opacity .5s; }
+    #splash .box { text-align: center; max-width: 92vw; }
+    #map { width: min(340px, 80vw); height: min(440px, 55vh); display: block; margin: 0 auto; }
+    #title { font-size: 24px; font-weight: 600; margin-top: 14px; }
+    #subtitle { font-size: 13px; color: #555; margin-top: 6px; }
+    #status { font-size: 12px; color: #2b6cb0; margin-top: 16px; min-height: 1.2em; }
+    #credit { font-size: 11px; color: #8a8985; margin-top: 22px; }
+    #credit a { color: #8a8985; }
+    .flow { stroke: #9cc7ef; stroke-dasharray: 2 10; animation: flow 1.6s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -12; } }
+    @media (prefers-reduced-motion: reduce) { .flow { animation: none; } }
+  </style>
+</head>
+<body onload="init()">
+  <div id="splash"><div class="box">
+    <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="title">Watershed digital twin</div>
+    <div id="subtitle"></div>
+    <div id="status">Loading&hellip;</div>
+    <div id="credit">OpenWatershedTwin &middot; OpenHydroQual</div>
+    <noscript>JavaScript is disabled. Please enable JavaScript to use this application.</noscript>
+  </div></div>
+  <div id="screen"></div>
+
+  <script type="text/javascript">
+    // ---- the watershed, drawn from the twin's GeoJSON ------------------------------------------------------------
+    const NS = 'http://www.w3.org/2000/svg';
+    async function getJson(url) { const r = await fetch(url + '?v=' + Date.now()); if (!r.ok) throw url; return r.json(); }
+
+    function lines(geom) {                       // coordinate lists of (Multi)LineString / (Multi)Polygon
+      const t = geom.type, c = geom.coordinates;
+      if (t === 'LineString') return [c];
+      if (t === 'MultiLineString' || t === 'Polygon') return c;
+      if (t === 'MultiPolygon') return c.flat();
+      return [];
+    }
+
+    async function drawSplash() {
+      const cfg = await getJson('viewer_config.json');
+      if (cfg.title) { document.getElementById('title').textContent = cfg.title; document.title = cfg.title; }
+      if (cfg.subtitle) document.getElementById('subtitle').textContent = cfg.subtitle;
+      if (cfg.credit) document.getElementById('credit').innerHTML = cfg.credit;
+      const L = cfg.layers || {};
+      const [bnd, rch] = await Promise.all([L.boundary ? getJson(L.boundary.url) : null,
+                                            L.reaches ? getJson(L.reaches.url) : null]);
+      const rings = bnd ? bnd.features.flatMap(f => lines(f.geometry)) : [];
+      const reaches = rch ? rch.features : [];
+      const all = rings.flat().concat(reaches.flatMap(f => lines(f.geometry).flat()));
+      if (!all.length) return;
+      // local equirectangular projection, y up
+      const lat0 = all.reduce((s, p) => s + p[1], 0) / all.length, kx = Math.cos(lat0 * Math.PI / 180);
+      const P = p => [p[0] * kx, -p[1]];
+      const xs = all.map(p => P(p)[0]), ys = all.map(p => P(p)[1]);
+      const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+      const W = 340, H = 440, pad = 8, s = Math.min((W - 2 * pad) / (x1 - x0), (H - 2 * pad) / (y1 - y0));
+      const ox = (W - (x1 - x0) * s) / 2, oy = (H - (y1 - y0) * s) / 2;
+      const d = pts => pts.map((p, i) => { const q = P(p); return (i ? 'L' : 'M') + ((q[0] - x0) * s + ox).toFixed(1) + ',' + ((q[1] - y0) * s + oy).toFixed(1); }).join('');
+      const svg = document.getElementById('map');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const add = (attrs) => { const e = document.createElementNS(NS, 'path'); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; };
+      if (rings.length) add({ d: rings.map(r => d(r) + 'Z').join(''), fill: '#e3ecd9', stroke: '#333', 'stroke-width': 1.2, 'fill-rule': 'evenodd' });
+      const wf = (L.reaches && L.reaches.width_field) || 'drainage_area_km2';
+      for (const f of reaches) {
+        const w = 0.6 + 1.6 * Math.log10(1 + (+f.properties[wf] || 1));
+        for (const seg of lines(f.geometry)) {
+          const pd = d(seg);
+          add({ d: pd, stroke: '#2b6cb0', 'stroke-width': w.toFixed(2), fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+          add({ d: pd, class: 'flow', 'stroke-width': Math.max(0.6, w * 0.45).toFixed(2), fill: 'none', 'stroke-linecap': 'round' });
+        }
+      }
+    }
+
+    // ---- the viewer -------------------------------------------------------------------------------------------
+    async function init() {
+      const splash = document.getElementById('splash'), screen = document.getElementById('screen');
+      const status = document.getElementById('status');
+      drawSplash().catch(e => console.warn('splash:', e));
+      status.innerHTML = 'Loading the viewer&hellip; (about 16&nbsp;MB, first visit only)';
+      try {
+        await qtLoad({
+          qt: {
+            onLoaded: () => {
+              screen.style.display = 'block';
+              splash.style.opacity = 0;
+              setTimeout(() => splash.style.display = 'none', 500);
+            },
+            onExit: exitData => {
+              screen.style.display = 'none';
+              splash.style.display = 'flex';
+              splash.style.opacity = 1;
+              status.textContent = 'The viewer stopped' + (exitData.text ? ': ' + exitData.text : '') + '. Reload the page to restart it.';
+            },
+            entryFunction: window.OWTViewer_entry,
+            containerElements: [screen],
+          }
+        });
+        status.textContent = 'Starting the viewer…';
+      } catch (e) {
+        console.error(e);
+        status.textContent = 'The viewer could not start in this browser (' + e + ').';
+      }
+    }
+  </script>
+  <script src="OWTViewer.js"></script>
+  <script type="text/javascript" src="qtloader.js"></script>
+</body>
+</html>

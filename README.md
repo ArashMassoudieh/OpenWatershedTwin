@@ -50,7 +50,8 @@ tools/twin_outputs.py sample --config watersheds/RockCreek/viewer_config.json --
     --out viewer/sample --cache cache/sample_run.npz
 qmake viewer/OWTViewer.pro && make && ./OWTViewer --base viewer/sample            # desktop
 source ~/emsdk/emsdk_env.sh && ~/Qt/6.8.2/wasm_singlethread/bin/qmake viewer/OWTViewer.pro && make
-# serve OWTViewer.html/.js/.wasm, qtloader.js and the contents of viewer/sample from one folder
+# serve index.html (copied from viewer/index.html by the build), OWTViewer.js/.wasm, qtloader.js and the
+# contents of the deployment's web/ folder (or viewer/sample) from one folder; open the folder's URL
 ```
 
 ## Status

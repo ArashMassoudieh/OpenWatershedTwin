@@ -1,5 +1,7 @@
 {
  "title": "Rock Creek digital twin",
+ "subtitle": "Streamflow, soil moisture and groundwater \u00b7 7-day forecast, updated every 6 hours",
+ "credit": "Built with <a href=\"https://github.com/ArashMassoudieh/OpenWatershedTwin\">OpenWatershedTwin</a> and <a href=\"https://github.com/ArashMassoudieh/OpenHydroQual\">OpenHydroQual</a> \u00b7 The Catholic University of America",
  "links": [
   {"label": "Model documentation", "tooltip": "Model structure, governing equations, calibration and validation (PDF)",
    "url": "https://github.com/ArashMassoudieh/OpenWatershedTwin/blob/main/docs/RockCreek/rockcreek_model.pdf"}
