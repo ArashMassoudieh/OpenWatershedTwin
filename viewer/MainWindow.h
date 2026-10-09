@@ -65,6 +65,7 @@ private:
     QString outputs_ = "outputs/";
     QHash<QString, QJsonObject> unitDocs_;
     QString selectedUnit_;
+    QString statusText_;                       // forecast status line (restored after a temporary message)
     QToolBar *linkBar_ = nullptr;
     QList<QAction *> linkActions_;
     ChartScope selectedScope_ = ChartScope::Variable;

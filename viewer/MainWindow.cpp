@@ -275,6 +275,7 @@ void MainWindow::loadOutputs(std::function<void()> ready)
         QString s = tr("Forecast issued %1").arg(status_.value("issued_utc").toString());
         if (status_.contains("rain_source")) s += "  |  " + tr("Rain: %1").arg(status_.value("rain_source").toString());
         if (status_.value("stale").toBool()) s += "  |  " + tr("STALE: the last cycle failed");
+        statusText_ = s;
         statusLabel_->setText(s);
     });
     data_->getJson(outputs_ + "map_state.json", [this, ready](const QJsonDocument &d, const QString &err) {
@@ -299,6 +300,11 @@ void MainWindow::updateMap()
     const QString key = currentKey();
     const QJsonObject var = currentVariable();
     const QJsonObject vals = mapState_.value("variables").toObject().value(key).toObject();
+    if (vals.isEmpty() && !mapState_.isEmpty())        // e.g. a variable added to the config since the last cycle
+        statusLabel_->setText(tr("No map data for %1 yet: it appears after the twin's next update.")
+                                  .arg(currentVariable().value("label").toString()));
+    else if (!statusText_.isEmpty())
+        statusLabel_->setText(statusText_);
     const int i = slider_->value();
     QHash<QString, double> values;
     double lo = std::numeric_limits<double>::infinity(), hi = -lo;
