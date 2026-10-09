@@ -66,3 +66,8 @@ Model documentation: `docs/RockCreek/rockcreek_model.pdf`.
 ```sh
 OpenHydroTwin/build-qmake/bin/OHTwin -d watersheds/RockCreek/deployments/live
 ```
+
+Public twin: **http://openhydrotwin.com/RockCreek/** (AWS, service `owt@RockCreek`). Deploy or update it with
+`deploy/deploy_rockcreek.sh` (`--with-state` copies this machine's state, `--fresh` cold-starts on the server); the
+script only writes its own paths on the shared host (`/home/ubuntu/owt`, `/var/www/owt/RockCreek`, `owt@.service`,
+`ohtwin-locations/RockCreek.conf`).

@@ -136,8 +136,12 @@ Python: venv `~/.venvs/rockcreek` (geopandas, rasterio with GRIB2, requests, num
 1. When the backfill is done: first live run (spin-up 2024-10-01 -> now in one catch-up cycle), check against USGS;
    (AORC/MRMS bias DONE 2026-10-09: tools/mrms_bias.py, overlap Oct 2024-Sep 2025, total 1.084, storms 1.02-1.08,
    light rain <0.5 mm/h 1.59 -> mrms_scale 1.08; cache/mrms_history rescaled from 1.15.)
-2. Deploy to openhydrotwin.com (AWS, nginx static, systemd; path /RockCreek/; see
-   OpenHydroTwin/HANDOFF_AWS_DEPLOY.md and deploy.sh): web/ + OWTViewer.html/.js/.wasm + qtloader.js.
+2. DEPLOYED 2026-10-09: http://openhydrotwin.com/RockCreek/ (EC2 52.42.223.42, Ubuntu 24.04, 2 CPU, 3.7 GB, ~5 GB
+   disk free; shared with the DrywellDT twins and GreenInfraIQ). deploy/deploy_rockcreek.sh: /home/ubuntu/owt/{app,repo,
+   venv}, web /var/www/owt/RockCreek, unit owt@RockCreek (journalctl -u owt@RockCreek), nginx
+   /etc/nginx/ohtwin-locations/RockCreek.conf (gzip). Installed python3.12-venv on the server. The LOCAL engine is
+   stopped (the server runs the live twin); key /home/arash/Dropbox/AWS_/ArashLinux.pem. Plain HTTP (HTTPS = later,
+   touches the shared server block).
 3. (Browser right-click: works with popup() + fresh files; the reported freeze was most likely a cached old build.
    Requests now carry ?v=<ms> because the browser cache ignores Qt's AlwaysNetwork in WebAssembly.)
 4. Viewer polish: smaller wasm (-Os), flood stage at Sherrill, DEM hillshade background.
