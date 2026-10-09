@@ -96,8 +96,11 @@ def main():
     start = dt.date.fromisoformat(c.get("start", "2024-10-01"))
 
     # 1. gridMET
-    ds = xr.concat([gridmet_year(y, b, cache, c.get("refresh_hours", 6), today)
-                    for y in range(start.year, today.year + 1)], "time")
+    # keep only pet on (time, lat, lon): downloads differ in auxiliary coordinates (e.g. spatial_ref)
+    years = [gridmet_year(y, b, cache, c.get("refresh_hours", 6), today)[["pet"]]
+             for y in range(start.year, today.year + 1)]
+    years = [d.drop_vars([v for v in d.coords if v not in ("time", "lat", "lon")]) for d in years]
+    ds = xr.concat(years, "time")
     ds = ds.sel(time=slice(str(start), None))
     pet = ds.pet.transpose("time", "lat", "lon").values
     W = weights(ds.lat.values, ds.lon.values, utm)
