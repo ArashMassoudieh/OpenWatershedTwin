@@ -99,7 +99,8 @@ cat > "$B/app/bin/run_owt.sh" << 'W'
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export LD_LIBRARY_PATH="${DIR}/../lib:${LD_LIBRARY_PATH}"
 export QT_PLUGIN_PATH="${DIR}/../plugins"
-exec "${DIR}/OHTwin" --deployment "/home/ubuntu/owt/repo/watersheds/$1/deployments/live"
+# line-buffered, so the engine's progress reaches the journal as it happens (stdout is not a terminal here)
+exec stdbuf -oL -eL "${DIR}/OHTwin" --deployment "/home/ubuntu/owt/repo/watersheds/$1/deployments/live"
 W
 chmod +x "$B/app/bin/run_owt.sh"
 cat > "$B/owt@.service" << U
