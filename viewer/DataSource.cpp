@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QFile>
 #include <QNetworkReply>
+#include <QDateTime>
 #include <QNetworkRequest>
 #include <QTimer>
 #include <QUrl>
@@ -28,7 +29,11 @@ void DataSource::getJson(const QString &rel, std::function<void(const QJsonDocum
         });
         return;
     }
-    QNetworkRequest req(QUrl(base_).resolved(QUrl(rel)));
+    // a unique query string: the browser's HTTP cache ignores CacheLoadControlAttribute in the WebAssembly build,
+    // and the outputs change every cycle under the same names
+    QUrl url = QUrl(base_).resolved(QUrl(rel));
+    url.setQuery("v=" + QString::number(QDateTime::currentMSecsSinceEpoch()));
+    QNetworkRequest req(url);
     req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
     QNetworkReply *reply = nam_.get(req);
     connect(reply, &QNetworkReply::finished, this, [reply, rel, done]() {

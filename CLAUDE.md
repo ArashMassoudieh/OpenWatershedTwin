@@ -138,6 +138,7 @@ Python: venv `~/.venvs/rockcreek` (geopandas, rasterio with GRIB2, requests, num
    light rain <0.5 mm/h 1.59 -> mrms_scale 1.08; cache/mrms_history rescaled from 1.15.)
 2. Deploy to openhydrotwin.com (AWS, nginx static, systemd; path /RockCreek/; see
    OpenHydroTwin/HANDOFF_AWS_DEPLOY.md and deploy.sh): web/ + OWTViewer.html/.js/.wasm + qtloader.js.
-3. Browser build: right-click on a unit freezes (WASM only; desktop fine) - not yet diagnosed.
+3. (Browser right-click: works with popup() + fresh files; the reported freeze was most likely a cached old build.
+   Requests now carry ?v=<ms> because the browser cache ignores Qt's AlwaysNetwork in WebAssembly.)
 4. Viewer polish: smaller wasm (-Os), flood stage at Sherrill, DEM hillshade background.
 5. Later: merge codegen-backend into OHTwin main, forecast skill tracking, ensemble rain, assimilation.
