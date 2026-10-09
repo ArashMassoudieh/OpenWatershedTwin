@@ -1,0 +1,1678 @@
+{
+ "entries": [
+  {
+   "name": "rain SC01",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC01.csv",
+    "forcing/rain_SC01.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC01",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC01",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC01.csv",
+   "targets": [
+    {
+     "source": "ET_SC01",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC01",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC02",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC02.csv",
+    "forcing/rain_SC02.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC02",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC02",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC02.csv",
+   "targets": [
+    {
+     "source": "ET_SC02",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC02",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC03",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC03.csv",
+    "forcing/rain_SC03.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC03",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC03",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC03.csv",
+   "targets": [
+    {
+     "source": "ET_SC03",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC03",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC04",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC04.csv",
+    "forcing/rain_SC04.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC04",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC04",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC04.csv",
+   "targets": [
+    {
+     "source": "ET_SC04",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC04",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC05",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC05.csv",
+    "forcing/rain_SC05.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC05",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC05",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC05.csv",
+   "targets": [
+    {
+     "source": "ET_SC05",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC05",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC06",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC06.csv",
+    "forcing/rain_SC06.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC06",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC06",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC06.csv",
+   "targets": [
+    {
+     "source": "ET_SC06",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC06",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC07",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC07.csv",
+    "forcing/rain_SC07.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC07",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC07",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC07.csv",
+   "targets": [
+    {
+     "source": "ET_SC07",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC07",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC08",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC08.csv",
+    "forcing/rain_SC08.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC08",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC08",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC08.csv",
+   "targets": [
+    {
+     "source": "ET_SC08",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC08",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC09",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC09.csv",
+    "forcing/rain_SC09.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC09",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC09",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC09.csv",
+   "targets": [
+    {
+     "source": "ET_SC09",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC09",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC10",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC10.csv",
+    "forcing/rain_SC10.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC10",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC10",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC10.csv",
+   "targets": [
+    {
+     "source": "ET_SC10",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC10",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC11",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC11.csv",
+    "forcing/rain_SC11.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC11",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC11",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC11.csv",
+   "targets": [
+    {
+     "source": "ET_SC11",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC11",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC12",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC12.csv",
+    "forcing/rain_SC12.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC12",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC12",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC12.csv",
+   "targets": [
+    {
+     "source": "ET_SC12",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC12",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC13",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC13.csv",
+    "forcing/rain_SC13.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC13",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC13",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC13.csv",
+   "targets": [
+    {
+     "source": "ET_SC13",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC13",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC14",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC14.csv",
+    "forcing/rain_SC14.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC14",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC14",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC14.csv",
+   "targets": [
+    {
+     "source": "ET_SC14",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC14",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC15",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC15.csv",
+    "forcing/rain_SC15.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC15",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC15",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC15.csv",
+   "targets": [
+    {
+     "source": "ET_SC15",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC15",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC16",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC16.csv",
+    "forcing/rain_SC16.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC16",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC16",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC16.csv",
+   "targets": [
+    {
+     "source": "ET_SC16",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC16",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC17",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC17.csv",
+    "forcing/rain_SC17.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC17",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC17",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC17.csv",
+   "targets": [
+    {
+     "source": "ET_SC17",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC17",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC18",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC18.csv",
+    "forcing/rain_SC18.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC18",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC18",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC18.csv",
+   "targets": [
+    {
+     "source": "ET_SC18",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC18",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC19",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC19.csv",
+    "forcing/rain_SC19.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC19",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC19",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC19.csv",
+   "targets": [
+    {
+     "source": "ET_SC19",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC19",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC20",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC20.csv",
+    "forcing/rain_SC20.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC20",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC20",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC20.csv",
+   "targets": [
+    {
+     "source": "ET_SC20",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC20",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC21",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC21.csv",
+    "forcing/rain_SC21.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC21",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC21",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC21.csv",
+   "targets": [
+    {
+     "source": "ET_SC21",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC21",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC22",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC22.csv",
+    "forcing/rain_SC22.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC22",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC22",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC22.csv",
+   "targets": [
+    {
+     "source": "ET_SC22",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC22",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC23",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC23.csv",
+    "forcing/rain_SC23.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC23",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC23",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC23.csv",
+   "targets": [
+    {
+     "source": "ET_SC23",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC23",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC24",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC24.csv",
+    "forcing/rain_SC24.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC24",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC24",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC24.csv",
+   "targets": [
+    {
+     "source": "ET_SC24",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC24",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC25",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC25.csv",
+    "forcing/rain_SC25.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC25",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC25",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC25.csv",
+   "targets": [
+    {
+     "source": "ET_SC25",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC25",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC26",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC26.csv",
+    "forcing/rain_SC26.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC26",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC26",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC26.csv",
+   "targets": [
+    {
+     "source": "ET_SC26",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC26",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC27",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC27.csv",
+    "forcing/rain_SC27.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC27",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC27",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC27.csv",
+   "targets": [
+    {
+     "source": "ET_SC27",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC27",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC28",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC28.csv",
+    "forcing/rain_SC28.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC28",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC28",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC28.csv",
+   "targets": [
+    {
+     "source": "ET_SC28",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC28",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC29",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC29.csv",
+    "forcing/rain_SC29.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC29",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC29",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC29.csv",
+   "targets": [
+    {
+     "source": "ET_SC29",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC29",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC30",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC30.csv",
+    "forcing/rain_SC30.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC30",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC30",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC30.csv",
+   "targets": [
+    {
+     "source": "ET_SC30",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC30",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC31",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC31.csv",
+    "forcing/rain_SC31.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC31",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC31",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC31.csv",
+   "targets": [
+    {
+     "source": "ET_SC31",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC31",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC32",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC32.csv",
+    "forcing/rain_SC32.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC32",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC32",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC32.csv",
+   "targets": [
+    {
+     "source": "ET_SC32",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC32",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC33",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC33.csv",
+    "forcing/rain_SC33.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC33",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC33",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC33.csv",
+   "targets": [
+    {
+     "source": "ET_SC33",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC33",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC34",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC34.csv",
+    "forcing/rain_SC34.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC34",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC34",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC34.csv",
+   "targets": [
+    {
+     "source": "ET_SC34",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC34",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC35",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC35.csv",
+    "forcing/rain_SC35.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC35",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC35",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC35.csv",
+   "targets": [
+    {
+     "source": "ET_SC35",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC35",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC36",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC36.csv",
+    "forcing/rain_SC36.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC36",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC36",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC36.csv",
+   "targets": [
+    {
+     "source": "ET_SC36",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC36",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC37",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC37.csv",
+    "forcing/rain_SC37.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC37",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC37",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC37.csv",
+   "targets": [
+    {
+     "source": "ET_SC37",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC37",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC38",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC38.csv",
+    "forcing/rain_SC38.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC38",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC38",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC38.csv",
+   "targets": [
+    {
+     "source": "ET_SC38",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC38",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC39",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC39.csv",
+    "forcing/rain_SC39.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC39",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC39",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC39.csv",
+   "targets": [
+    {
+     "source": "ET_SC39",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC39",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC40",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC40.csv",
+    "forcing/rain_SC40.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC40",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC40",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC40.csv",
+   "targets": [
+    {
+     "source": "ET_SC40",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC40",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC41",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC41.csv",
+    "forcing/rain_SC41.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC41",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC41",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC41.csv",
+   "targets": [
+    {
+     "source": "ET_SC41",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC41",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC42",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC42.csv",
+    "forcing/rain_SC42.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC42",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC42",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC42.csv",
+   "targets": [
+    {
+     "source": "ET_SC42",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC42",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC43",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC43.csv",
+    "forcing/rain_SC43.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC43",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC43",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC43.csv",
+   "targets": [
+    {
+     "source": "ET_SC43",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC43",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC44",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC44.csv",
+    "forcing/rain_SC44.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC44",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC44",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC44.csv",
+   "targets": [
+    {
+     "source": "ET_SC44",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC44",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC45",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC45.csv",
+    "forcing/rain_SC45.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC45",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC45",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC45.csv",
+   "targets": [
+    {
+     "source": "ET_SC45",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC45",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC46",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC46.csv",
+    "forcing/rain_SC46.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC46",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC46",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC46.csv",
+   "targets": [
+    {
+     "source": "ET_SC46",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC46",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC47",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC47.csv",
+    "forcing/rain_SC47.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC47",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC47",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC47.csv",
+   "targets": [
+    {
+     "source": "ET_SC47",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC47",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC48",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC48.csv",
+    "forcing/rain_SC48.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC48",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC48",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC48.csv",
+   "targets": [
+    {
+     "source": "ET_SC48",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC48",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC49",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC49.csv",
+    "forcing/rain_SC49.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC49",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC49",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC49.csv",
+   "targets": [
+    {
+     "source": "ET_SC49",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC49",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC50",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC50.csv",
+    "forcing/rain_SC50.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC50",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC50",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC50.csv",
+   "targets": [
+    {
+     "source": "ET_SC50",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC50",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC51",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC51.csv",
+    "forcing/rain_SC51.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC51",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC51",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC51.csv",
+   "targets": [
+    {
+     "source": "ET_SC51",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC51",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC52",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC52.csv",
+    "forcing/rain_SC52.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC52",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC52",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC52.csv",
+   "targets": [
+    {
+     "source": "ET_SC52",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC52",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC53",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC53.csv",
+    "forcing/rain_SC53.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC53",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC53",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC53.csv",
+   "targets": [
+    {
+     "source": "ET_SC53",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC53",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  },
+  {
+   "name": "rain SC54",
+   "variable": "precipitation",
+   "provider": "csv",
+   "files": [
+    "../../../../cache/mrms_history/rain_SC54.csv",
+    "forcing/rain_SC54.csv"
+   ],
+   "targets": [
+    {
+     "source": "P_SC54",
+     "quantity": "timeseries"
+    }
+   ]
+  },
+  {
+   "name": "ET0 SC54",
+   "variable": "et0",
+   "provider": "csv",
+   "file": "forcing/et_SC54.csv",
+   "targets": [
+    {
+     "source": "ET_SC54",
+     "quantity": "ET_timeseries"
+    },
+    {
+     "source": "ET2_SC54",
+     "quantity": "ET_timeseries"
+    }
+   ]
+  }
+ ]
+}

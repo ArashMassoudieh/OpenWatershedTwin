@@ -56,6 +56,12 @@ Variables, viewer side: `"map": true` lists the variable in the map's variable b
 variable of an element is marked, all are listed); every variable is available in the charts (context menu:
 the map variable, all variables of the element, all elements). `"log": true` gives a logarithmic colour scale.
 
+`rain_source` (engine): the model rain source of a unit, e.g. `"P_{unit}"`; its forcing entry gives the rainfall
+chart (mm/h). `gages` (engine and viewer): per gage `id`, `name` and `series` (`id` `Q`/`H`, `label`, `unit`,
+`source`, `scale` as for variables, `observed`: a file `{gage}_flow.csv` in the observations folder, rows
+`t,value` in display units). `links` (viewer): toolbar buttons that open a URL, e.g. the model documentation:
+`{"label": "Model documentation", "tooltip": "...", "url": "https://..."}`.
+
 `layers.masks` (optional): areas drawn hatched with a legend entry, e.g. the combined-sewer area that does not
 drain to the stream. `output_times`: history window (days) and the chart and map time steps (hours).
 
@@ -93,6 +99,9 @@ initial position is the entry nearest `now`.
   }
 }
 ```
+
+A unit file may instead carry one time axis for all its series (`"t"` next to `"series"`); a series without its own
+`t` uses it (what the engine writes).
 
 History and forecast in one series per variable; the viewer shades `t > now` as forecast.
 

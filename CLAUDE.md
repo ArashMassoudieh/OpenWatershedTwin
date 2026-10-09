@@ -114,25 +114,29 @@ Python: venv `~/.venvs/rockcreek` (geopandas, rasterio with GRIB2, requests, num
   01648010 (+ 01648011 when present).
 - AORC (calibration rain) ends 2025-10-01: history = AORC to then, MRMS after.
 
-## Status at handoff (2026-10-08)
+## Status (2026-10-09)
 
-- MRMS backfill 2024-10-01 .. 2026-10-08 running in the background (pid 3959101; log `cache/mrms_history_backfill.log`;
-  output `cache/mrms_history/rain_SCnn.csv`; ~2,300 of ~17,500 hours at 20:00 EDT, about 4-5 h total). Its config
-  is a scratch file with absolute paths; to rerun, copy `watersheds/RockCreek/forcing/mrms_feed.json` with
-  `output_dir` pointing elsewhere.
+- Engine (OHTwin codegen-backend): DTViewerWriter writes the viewer files every cycle; runtime.catch_up /
+  data_latency / check_interval / pre_cycle_command; csv forcing `files` lists (history + live window); Forecast
+  starts from the Advance end state. Live deployment `watersheds/RockCreek/deployments/live` (config.json +
+  forcing_map.json in git; web/, state/, forcing/, observations/ generated): cold start 2024-10-01, rain files
+  [cache/mrms_history (backfill), forcing/ (live feed)], ET forcing/et_SCnn.csv, kernel
+  build/kernels/RockCreek_v9_out (generated with --outputs watersheds/RockCreek/kernel_outputs.txt; v11 has the
+  same structure as v9). Feeds: tools/rockcreek_feeds.sh = mrms_feed + et_feed (gridMET + Open-Meteo, ratio 1.00 on
+  the overlap) + usgs_feed (NWIS IV; on 2026-10-09 Sherrill had no data for 30 days, Turkey flow = equipment
+  malfunction). Test: live_test (cold start 2026-09-10, ignored by git) produced correct viewer files.
+- Parameters: calibration attempt 11, Levenberg-Marquardt (final set; validation WY2020-25: main-stem flow NSE
+  0.73/0.78, stage 0.82/0.80; Turkey Branch flow 0.72, not calibrated). Documentation: docs/RockCreek/
+  rockcreek_model.pdf (built in the calibration project, docs/public/), linked from the viewer (config `links`).
+- MRMS backfill 2024-10-01 .. 2026-10-08 (pid 3959101, output cache/mrms_history/) must finish before the live
+  deployment's first (spin-up) cycle can run.
 
-## Next steps (agreed order; confirm with the user before each)
+## Next steps (confirm with the user before each)
 
-1. Engine writes the viewer files every cycle (docs/viewer_data.md): status.json, map_state.json,
-   units/<id>.json, gages/<id>.json. Element values: DONE at kernel level (OHQ codegen G7 outputs,
-   `ohq_generate --outputs`; DTKernelModel::setOutputInterval -> KernelStageResult::outputs). Remaining: port the
-   writer in tools/twin_outputs.py (source/divide_by/scale from viewer_config.json) into DTRunner; USGS
-   observations at the gages (NWIS IV) for display.
-2. When the backfill is done: AORC/MRMS bias from the overlap year Oct 2024-Sep 2025 -> mrms_scale; long run
-   2012 -> now (AORC then MRMS) for the history and the initial state.
-3. Live deployment: rain from the MRMS feed (csv provider), reference ET from Open-Meteo at unit points (openmeteo
-   provider), 6-hourly cycles, 7-day forecast, feed on a timer before each cycle; then deploy to openhydrotwin.com
-   (AWS, nginx static, systemd; path /RockCreek/; see OpenHydroTwin/HANDOFF_AWS_DEPLOY.md and deploy.sh).
-4. Viewer polish: smaller wasm (-Os), streams coloured by flow, flood stage at Sherrill, DEM hillshade background,
-   test clicks in the browser.
+1. When the backfill is done: first live run (spin-up 2024-10-01 -> now in one catch-up cycle), check against USGS;
+   AORC/MRMS bias from the overlap year Oct 2024-Sep 2025 -> mrms_scale (provisional 1.15).
+2. Deploy to openhydrotwin.com (AWS, nginx static, systemd; path /RockCreek/; see
+   OpenHydroTwin/HANDOFF_AWS_DEPLOY.md and deploy.sh): web/ + OWTViewer.html/.js/.wasm + qtloader.js.
+3. Browser build: right-click on a unit freezes (WASM only; desktop fine) - not yet diagnosed.
+4. Viewer polish: smaller wasm (-Os), flood stage at Sherrill, DEM hillshade background.
 5. Later: merge codegen-backend into OHTwin main, forecast skill tracking, ensemble rain, assimilation.

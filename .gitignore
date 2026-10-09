@@ -9,3 +9,12 @@ build*/
 cache/
 watersheds/*/deployments/*/forcing/
 viewer/sample/
+# deployments: keep config.json and forcing_map.json; generated data and run products stay local
+watersheds/*/deployments/*/*
+!watersheds/*/deployments/*/config.json
+!watersheds/*/deployments/*/forcing_map.json
+.claude/
+# local test deployments
+watersheds/*/deployments/iso_*/
+watersheds/*/deployments/replay_test/
+watersheds/*/deployments/live_test/

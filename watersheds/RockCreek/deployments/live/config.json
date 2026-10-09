@@ -1,0 +1,53 @@
+{
+ "deployment": {
+  "name": "RockCreek_live",
+  "model_file": "/home/arash/Dropbox/Rock Creek Model - OHQ/model/calWY1819v9.ohq",
+  "port": 8200
+ },
+ "solver": {
+  "backend": "codegen",
+  "library": "../../../../build/kernels/RockCreek_v9_out/build/libRockCreekWY1819.so",
+  "dt0": 0.0005,
+  "parameters": {
+   "p_Ksat": 4.42250116,
+   "p_Ksat_s": 0.01856253131,
+   "p_imp": 1.224005858,
+   "p_Kc": 0.6717818367,
+   "p_Kc2": 0.2922877579,
+   "p_gwKl": 0.02252129784,
+   "p_gwpor": 0.06027914253,
+   "p_nch": 0.05014698319,
+   "p_riser": 0.8359645042,
+   "p_fr": 0.0540217336,
+   "p_nsSy": 0.3898157156,
+   "p_nsK": 1.017640718
+  },
+  "parameter_set": "v11 LM (Rock Creek calibration attempt 11, Levenberg-Marquardt, 2026-10-09)"
+ },
+ "forcing": {
+  "file": "forcing_map.json"
+ },
+ "viewer": {
+  "config": "../../viewer_config.json",
+  "web_dir": "web",
+  "observations_dir": "observations"
+ },
+ "runtime": {
+  "interval": "6hr",
+  "forecast_horizon": "7day",
+  "start_datetime": "2024-10-01T00:00:00Z",
+  "catch_up": true,
+  "data_latency": "1hr",
+  "check_interval": "15min",
+  "time_acceleration": 1,
+  "pre_cycle_command": "sh ../../../../tools/rockcreek_feeds.sh",
+  "pre_cycle_timeout_s": 1800,
+  "state_variables": [],
+  "keep_debug_outputs": false
+ },
+ "observations": {
+  "save_interval": "1hr",
+  "noise_sigma": 0.0,
+  "noise_correlation_time": "6hr"
+ }
+}

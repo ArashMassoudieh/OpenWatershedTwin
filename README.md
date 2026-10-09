@@ -55,5 +55,13 @@ source ~/emsdk/emsdk_env.sh && ~/Qt/6.8.2/wasm_singlethread/bin/qmake viewer/OWT
 
 ## Status
 
-Engine: code-generated kernel backend and forcing map in OpenHydroTwin (branch `codegen-backend`); MRMS rainfall
-feed (`tools/mrms_feed.py`). Viewer: first version, on sample data. See `docs/plan.md`.
+Engine: OpenHydroTwin (branch `codegen-backend`) with the code-generated kernel, forcing map, catch-up cycling and
+the viewer-file writer. Feeds (`tools/rockcreek_feeds.sh`, run by the engine before each cycle): rainfall
+(`mrms_feed.py`: MRMS radar QPE, Open-Meteo forecast), reference ET (`et_feed.py`: gridMET, Open-Meteo after it)
+and USGS observations (`usgs_feed.py`). Rock Creek live deployment: `watersheds/RockCreek/deployments/live`
+(6-hourly cycles, 7-day forecast, cold start 2024-10-01; parameters: calibration attempt 11, Levenberg-Marquardt).
+Model documentation: `docs/RockCreek/rockcreek_model.pdf`.
+
+```sh
+OpenHydroTwin/build-qmake/bin/OHTwin -d watersheds/RockCreek/deployments/live
+```

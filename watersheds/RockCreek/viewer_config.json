@@ -1,5 +1,9 @@
 {
  "title": "Rock Creek digital twin",
+ "links": [
+  {"label": "Model documentation", "tooltip": "Model structure, governing equations, calibration and validation (PDF)",
+   "url": "https://github.com/ArashMassoudieh/OpenWatershedTwin/blob/main/docs/RockCreek/rockcreek_model.pdf"}
+ ],
  "layers": {
   "units": {"url": "gis/subcatchments.geojson", "id_field": "id", "label_field": "id"},
   "reaches": {"url": "gis/reaches.geojson", "id_field": "id", "width_field": "drainage_area_km2"},
@@ -9,7 +13,19 @@
  },
  "outputs": "outputs/",
  "output_times": {"history_days": 45, "chart_step_hours": 1, "map_step_hours": 3},
- "placeholders": {"unit": "subcatchment id", "segment": "receiving_segment of the unit (subcatchments.geojson)"},
+ "placeholders": {"unit": "subcatchment id", "segment": "receiving_segment of the unit (subcatchments.geojson)", "gage": "gage id"},
+ "rain_source": "P_{unit}",
+ "gages": [
+  {"id": "01647850", "name": "Turkey Branch near Rockville", "series": [
+   {"id": "Q", "label": "Flow", "unit": "m3/s", "source": "G30-R32:flow", "scale": 1.1574074e-5, "observed": "{gage}_flow.csv"},
+   {"id": "H", "label": "Stage above zero flow", "unit": "m", "source": "G30:obs_depth", "observed": "{gage}_stage.csv"}]},
+  {"id": "01648000", "name": "Rock Creek at Sherrill Dr", "series": [
+   {"id": "Q", "label": "Flow", "unit": "m3/s", "source": "G45-R48:flow", "scale": 1.1574074e-5, "observed": "{gage}_flow.csv"},
+   {"id": "H", "label": "Stage above zero flow", "unit": "m", "source": "G45:obs_depth", "observed": "{gage}_stage.csv"}]},
+  {"id": "01648010", "name": "Rock Creek at Joyce Rd", "series": [
+   {"id": "Q", "label": "Flow", "unit": "m3/s", "source": "G48-R50:flow", "scale": 1.1574074e-5, "observed": "{gage}_flow.csv"},
+   {"id": "H", "label": "Stage above zero flow", "unit": "m", "source": "G48:obs_depth", "observed": "{gage}_stage.csv"}]}
+ ],
  "elements": [
   {"id": "Catchment", "label": "Pervious surface", "variables": [
    {"id": "ponding", "label": "Ponded depth", "unit": "mm", "source": "{unit}__Catchment:depth", "scale": 1000, "map": true, "min": 0, "max": 5, "palette": "depth"},

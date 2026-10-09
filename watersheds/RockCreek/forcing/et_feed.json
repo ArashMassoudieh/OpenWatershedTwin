@@ -1,0 +1,10 @@
+{
+ "units_geojson": "../gis/subcatchments.geojson",
+ "unit_id_field": "id",
+ "output_dir": "../deployments/live/forcing",
+ "file_pattern": "et_{id}.csv",
+ "cache_dir": "../../../cache/gridmet",
+ "start": "2024-09-25",
+ "refresh_hours": 6,
+ "openmeteo": {"past_days": 10, "forecast_days": 10, "scale": 1.0}
+}

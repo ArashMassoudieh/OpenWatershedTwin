@@ -10,6 +10,8 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMenu>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QMessageBox>
 #include <QSlider>
 #include <QSplitter>
@@ -56,6 +58,8 @@ void MainWindow::buildUi()
     tb->addSeparator();
     tb->addAction(tr("Fit"), this, [this]() { map_->fitToExtent(); });
     tb->addAction(tr("Refresh"), this, &MainWindow::refresh);
+    tb->addSeparator();
+    linkBar_ = tb;
 
     auto *central = new QWidget;
     auto *v = new QVBoxLayout(central);
@@ -134,6 +138,17 @@ void MainWindow::load(std::function<void()> ready)
         if (!err.isEmpty()) { error(err); return; }
         config_ = doc.object();
         setWindowTitle(config_.value("title").toString("OpenWatershedTwin"));
+        // "links": documentation etc., opened in the browser (a new tab in the WebAssembly build)
+        for (QAction *a : linkActions_) { linkBar_->removeAction(a); a->deleteLater(); }
+        linkActions_.clear();
+        for (const QJsonValue &lv : config_.value("links").toArray())
+        {
+            const QJsonObject l = lv.toObject();
+            const QUrl url(l.value("url").toString());
+            QAction *a = linkBar_->addAction(l.value("label").toString(), this, [url]() { QDesktopServices::openUrl(url); });
+            a->setToolTip(l.value("tooltip").toString(url.toString()));
+            linkActions_ << a;
+        }
         outputs_ = config_.value("outputs").toString("outputs/");
         elements_ = config_.value("elements").toArray();
         buildElementButtons();

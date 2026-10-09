@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QMainWindow>
+#include <QToolBar>
 #include <functional>
 
 class DataSource;
@@ -64,6 +65,8 @@ private:
     QString outputs_ = "outputs/";
     QHash<QString, QJsonObject> unitDocs_;
     QString selectedUnit_;
+    QToolBar *linkBar_ = nullptr;
+    QList<QAction *> linkActions_;
     ChartScope selectedScope_ = ChartScope::Variable;
     int pendingLayers_ = 0;
 };
