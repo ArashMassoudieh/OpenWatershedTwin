@@ -97,23 +97,26 @@ void MainWindow::buildUi()
     connect(refreshTimer_, &QTimer::timeout, this, &MainWindow::refresh);
 
     connect(map_, &MapView::unitContextMenu, this, [this](const QString &unit, const QPoint &pos) {
-        QMenu m;
-        m.addSection(unit);
+        // popup(), not exec(): a nested event loop blocks the single-threaded WebAssembly build
+        auto *m = new QMenu(this);
+        m->setAttribute(Qt::WA_DeleteOnClose);
+        m->addSection(unit);
         const QString var = currentVariable().value("label").toString();
-        m.addAction(tr("%1: history and forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Both, false); });
-        m.addAction(tr("%1: history").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::History, false); });
-        m.addAction(tr("%1: forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, false); });
-        m.addSeparator();
-        m.addAction(tr("All elements of %1").arg(unit), this, [this, unit]() { showUnit(unit, TimeMode::Both, true); });
-        m.addAction(tr("All elements, forecast"), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, true); });
-        m.exec(pos);
+        m->addAction(tr("%1: history and forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Both, false); });
+        m->addAction(tr("%1: history").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::History, false); });
+        m->addAction(tr("%1: forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, false); });
+        m->addSeparator();
+        m->addAction(tr("All elements of %1").arg(unit), this, [this, unit]() { showUnit(unit, TimeMode::Both, true); });
+        m->addAction(tr("All elements, forecast"), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, true); });
+        m->popup(pos);
     });
     connect(map_, &MapView::unitClicked, this, [this](const QString &unit) { showUnit(unit, TimeMode::Both, false); });
     connect(map_, &MapView::gageContextMenu, this, [this](const QString &gage, const QPoint &pos) {
-        QMenu m;
-        m.addSection(gage);
-        m.addAction(tr("Flow and stage: model and USGS"), this, [this, gage]() { showGage(gage); });
-        m.exec(pos);
+        auto *m = new QMenu(this);
+        m->setAttribute(Qt::WA_DeleteOnClose);
+        m->addSection(gage);
+        m->addAction(tr("Flow and stage: model and USGS"), this, [this, gage]() { showGage(gage); });
+        m->popup(pos);
     });
     resize(1400, 860);
 }
