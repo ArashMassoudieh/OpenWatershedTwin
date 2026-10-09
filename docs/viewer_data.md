@@ -35,9 +35,29 @@ since 1899-12-30, UTC); the viewer converts them to dates.
 }
 ```
 
+The watershed's `viewer_config.json` (e.g. `watersheds/RockCreek/viewer_config.json`) is read by both sides: the
+engine computes what it lists and copies it next to the outputs; the viewer draws from it. Full example there.
+
 `elements` drives the element buttons. Each variable's key in the output files is `<element id>:<variable id>`
 (e.g. `Soil_1:moisture`). `min`/`max` fix the colour scale (otherwise the viewer uses the data range);
-`palette` is one of `moisture`, `depth`, `flow`, `head`.
+`palette` is one of `moisture`, `depth`, `flow`, `head`. An element with `"map_layer": "reaches"` colours the stream
+lines instead of the sub-catchments (its values are keyed by reach id; default `"units"`).
+
+Variables, engine side:
+- `source`: the model quantity, `"<object>:<quantity>"`, with `{unit}` (unit id) and `{segment}` (the unit's
+  `receiving_segment` in the units layer) and `*` globs (first match), e.g. `"{unit}__Soil_1:theta"`,
+  `"{segment}-*:flow"` (the segment's outgoing link).
+- `divide_by` (optional): a second quantity the value is divided by (per-area fluxes: `"{unit}__Catchment:area"`).
+- `scale` (optional, default 1): factor after the division (m3/d -> m3/s: 1.1574074e-5; m/d -> mm/d: 1000; a
+  sink reported negative: -1000).
+- `tools/twin_outputs.py spec` turns these into the kernel's `--outputs` list.
+
+Variables, viewer side: `"map": true` lists the variable in the map's variable box (keep these few; if no
+variable of an element is marked, all are listed); every variable is available in the charts (context menu:
+the map variable, all variables of the element, all elements). `"log": true` gives a logarithmic colour scale.
+
+`layers.masks` (optional): areas drawn hatched with a legend entry, e.g. the combined-sewer area that does not
+drain to the stream. `output_times`: history window (days) and the chart and map time steps (hours).
 
 ## status.json
 

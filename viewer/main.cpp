@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     w.load([&]() {
         if (shot.isEmpty()) return;
         if (cl.isSet("element")) w.selectElement(cl.value("element"));
-        if (cl.isSet("unit")) w.showUnit(cl.value("unit"), TimeMode::Both, false);
+        if (cl.isSet("unit")) w.showUnit(cl.value("unit"), TimeMode::Both, MainWindow::ChartScope::Element);
         if (cl.isSet("gage")) w.showGage(cl.value("gage"));
         QTimer::singleShot(1500, &app, [&]() {
             w.grab().save(shot);

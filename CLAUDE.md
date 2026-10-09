@@ -27,8 +27,11 @@ Background notes from the Rock Creek session (decisions, history, calibration re
 OpenHydroTwin/   submodule (github ArashMassoudieh/OHTwin), checked out on branch codegen-backend
 OpenHydroQual/   submodule (github ArashMassoudieh/OpenHydroQual, master); jsoncpp is a NESTED submodule:
                  git submodule update --init --recursive
-viewer/          Qt Widgets map viewer (desktop + WebAssembly), viewer/sample/ = sample outputs
-tools/           mrms_feed.py (rain feed), make_sample_outputs.py (viewer sample data)
+viewer/          Qt Widgets map viewer (desktop + WebAssembly); viewer/sample/ = sample outputs (NOT in git, regenerate:
+                 README "Viewer"; kernel build/kernels/RockCreek_v9_out, model run cached in cache/sample_run_v9.npz)
+tools/           mrms_feed.py (rain feed), twin_outputs.py (kernel output list from viewer_config.json; viewer sample
+                 data from a kernel run), rockcreek_display_layers.py (combined-sewer mask, sliver removal),
+                 make_sample_outputs.py (older state-based sample, superseded by twin_outputs.py)
 docs/            plan.md, viewer_data.md (engine -> viewer data contract)
 watersheds/RockCreek/
     gis/         GeoJSON (WGS84): subcatchments (id SC01..SC54, receiving_segment, downstream_unit, imperviousness),
@@ -121,9 +124,10 @@ Python: venv `~/.venvs/rockcreek` (geopandas, rasterio with GRIB2, requests, num
 ## Next steps (agreed order; confirm with the user before each)
 
 1. Engine writes the viewer files every cycle (docs/viewer_data.md): status.json, map_state.json,
-   units/<id>.json, gages/<id>.json. Needs per-unit element values: either computed from kernel states (storages ->
-   moisture, water table, ponding, as in tools/make_sample_outputs.py) or added as data-free observations / a kernel
-   ABI extension for arbitrary quantities (cleaner). USGS observations at the gages (NWIS IV) for display.
+   units/<id>.json, gages/<id>.json. Element values: DONE at kernel level (OHQ codegen G7 outputs,
+   `ohq_generate --outputs`; DTKernelModel::setOutputInterval -> KernelStageResult::outputs). Remaining: port the
+   writer in tools/twin_outputs.py (source/divide_by/scale from viewer_config.json) into DTRunner; USGS
+   observations at the gages (NWIS IV) for display.
 2. When the backfill is done: AORC/MRMS bias from the overlap year Oct 2024-Sep 2025 -> mrms_scale; long run
    2012 -> now (AORC then MRMS) for the history and the initial state.
 3. Live deployment: rain from the MRMS feed (csv provider), reference ET from Open-Meteo at unit points (openmeteo

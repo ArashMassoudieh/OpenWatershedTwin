@@ -26,6 +26,23 @@ qint64 toMs(double serial) { return qint64((serial - kUnixSerial) * 86400000.0);
 
 struct Range { double t0, t1; };
 
+// a unit file carries one time axis ("t") for all its series; give it to each series that has none
+QJsonObject withTimes(const QJsonObject &doc)
+{
+    if (!doc.contains("t")) return doc;
+    QJsonObject series = doc.value("series").toObject();
+    for (auto it = series.begin(); it != series.end(); ++it)
+    {
+        QJsonObject s = it.value().toObject();
+        if (s.contains("t")) continue;
+        s["t"] = doc.value("t");
+        it.value() = s;
+    }
+    QJsonObject d = doc;
+    d["series"] = series;
+    return d;
+}
+
 Range timeWindow(const QJsonObject &doc, TimeMode mode)
 {
     const double now = doc.value("now").toDouble();
@@ -51,7 +68,7 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
     chart->legend()->setAlignment(Qt::AlignBottom);
     chart->setMargins(QMargins(4, 4, 4, 4));
     auto *ax = new QDateTimeAxis;
-    ax->setFormat((r.t1 - r.t0) > 120 ? "MMM yyyy" : "dd MMM");
+    ax->setFormat((r.t1 - r.t0) > 120 ? "MMM yyyy" : (r.t1 - r.t0) > 12 ? "dd MMM" : "dd MMM hh:mm");
     ax->setRange(QDateTime::fromMSecsSinceEpoch(toMs(r.t0), QTimeZone::UTC),
                  QDateTime::fromMSecsSinceEpoch(toMs(r.t1), QTimeZone::UTC));
     ax->setTickCount(6);
@@ -65,16 +82,15 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
         auto *ls = new QLineSeries;
         ls->setName(name);
         const QJsonArray t = o.value("t").toArray(), v = o.value("v").toArray();
-        double prevT = 0;
+        double width = 1.0;                                          // bar width = the series' time step
         for (int i = 0; i < t.size() && i < v.size(); ++i)
         {
+            if (i + 1 < t.size()) width = t[i + 1].toDouble() - t[i].toDouble();
             if (v[i].isNull()) continue;
             const double ti = t[i].toDouble(), vi = v[i].toDouble();
             if (ti < r.t0 - 1 || ti > r.t1 + 1) continue;
-            if (step && i > 0) ls->append(toMs(prevT), vi);          // bars as a step line over each day
-            ls->append(toMs(ti), vi);
-            if (step) { ls->append(toMs(ti + 1.0), vi); }
-            prevT = ti;
+            ls->append(toMs(ti), vi);                                // bars as a step line over each interval
+            if (step) ls->append(toMs(ti + width), vi);
             ymin = std::min(ymin, vi);
             ymax = std::max(ymax, vi);
         }
@@ -176,9 +192,10 @@ void ChartPanel::clear(const QString &message)
     keys_.clear();
 }
 
-void ChartPanel::show(const QString &title, const QJsonObject &doc, const QStringList &keys, TimeMode mode)
+void ChartPanel::show(const QString &title, const QJsonObject &unitDoc, const QStringList &keys, TimeMode mode)
 {
     clear(title);
+    const QJsonObject doc = withTimes(unitDoc);
     doc_ = doc;
     keys_ = keys;
     mode_ = mode;

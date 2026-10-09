@@ -27,7 +27,8 @@ public:
     MapView *map() const { return map_; }
     // load everything; `ready` is called once the layers and map state are in
     void load(std::function<void()> ready = nullptr);
-    void showUnit(const QString &unit, TimeMode mode, bool allElements);
+    enum class ChartScope { Variable, Element, All };   // the map variable, all of the element's, everything
+    void showUnit(const QString &unit, TimeMode mode, ChartScope scope);
     void showGage(const QString &gage);
     void selectElement(const QString &elementId);
 
@@ -63,5 +64,6 @@ private:
     QString outputs_ = "outputs/";
     QHash<QString, QJsonObject> unitDocs_;
     QString selectedUnit_;
+    ChartScope selectedScope_ = ChartScope::Variable;
     int pendingLayers_ = 0;
 };

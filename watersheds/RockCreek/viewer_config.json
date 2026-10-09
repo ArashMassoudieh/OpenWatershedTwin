@@ -1,0 +1,71 @@
+{
+ "title": "Rock Creek digital twin",
+ "layers": {
+  "units": {"url": "gis/subcatchments.geojson", "id_field": "id", "label_field": "id"},
+  "reaches": {"url": "gis/reaches.geojson", "id_field": "id", "width_field": "drainage_area_km2"},
+  "points": {"url": "gis/control_points.geojson", "id_field": "id", "label_field": "name", "gage_filter_field": "calibration"},
+  "boundary": {"url": "gis/watershed_boundary.geojson"},
+  "masks": [{"url": "gis/combined_sewer_area.geojson", "label": "Combined sewer area (drains to Blue Plains, not modelled)"}]
+ },
+ "outputs": "outputs/",
+ "output_times": {"history_days": 45, "chart_step_hours": 1, "map_step_hours": 3},
+ "placeholders": {"unit": "subcatchment id", "segment": "receiving_segment of the unit (subcatchments.geojson)"},
+ "elements": [
+  {"id": "Catchment", "label": "Pervious surface", "variables": [
+   {"id": "ponding", "label": "Ponded depth", "unit": "mm", "source": "{unit}__Catchment:depth", "scale": 1000, "map": true, "min": 0, "max": 5, "palette": "depth"},
+   {"id": "runoff", "label": "Runoff", "unit": "mm/d", "source": "{unit}__catchment_to_reach:flow", "divide_by": "{unit}__Catchment:area", "scale": 1000},
+   {"id": "infiltration", "label": "Infiltration", "unit": "mm/d", "source": "{unit}__infiltration:flow", "divide_by": "{unit}__Catchment:area", "scale": 1000}
+  ]},
+  {"id": "Impervious_Catchment", "label": "Impervious surface", "variables": [
+   {"id": "ponding", "label": "Ponded depth", "unit": "mm", "source": "{unit}__Impervious_Catchment:depth", "scale": 1000, "map": true, "min": 0, "max": 2, "palette": "depth"},
+   {"id": "runoff", "label": "Runoff", "unit": "mm/d", "source": "{unit}__impervious_catchment_to_reach:flow", "divide_by": "{unit}__Impervious_Catchment:area", "scale": 1000}
+  ]},
+  {"id": "Reach", "label": "Pervious reach", "variables": [
+   {"id": "depth", "label": "Water depth", "unit": "m", "source": "{unit}__Reach:depth", "map": true, "palette": "depth"},
+   {"id": "outflow", "label": "Outflow to stream", "unit": "m3/s", "source": "{unit}-{segment}-perv:flow", "scale": 1.1574074e-5},
+   {"id": "storage", "label": "Storage", "unit": "m3", "source": "{unit}__Reach:Storage"}
+  ]},
+  {"id": "Impervious_Reach", "label": "Impervious reach", "variables": [
+   {"id": "depth", "label": "Water depth", "unit": "m", "source": "{unit}__Impervious_Reach:depth", "map": true, "palette": "depth"},
+   {"id": "outflow", "label": "Outflow to stream", "unit": "m3/s", "source": "{unit}-{segment}-imp:flow", "scale": 1.1574074e-5},
+   {"id": "storage", "label": "Storage", "unit": "m3", "source": "{unit}__Impervious_Reach:Storage"}
+  ]},
+  {"id": "Soil_1", "label": "Soil 1", "variables": [
+   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_1:theta", "map": true, "min": 0.05, "max": 0.45, "palette": "moisture"},
+   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_1:Se", "min": 0, "max": 1},
+   {"id": "pressure_head", "label": "Pressure head", "unit": "m", "source": "{unit}__Soil_1:pressure_head"},
+   {"id": "et", "label": "Evapotranspiration", "unit": "mm/d", "source": "{unit}__Soil_1:Evapotranspiration", "divide_by": "{unit}__Soil_1:area", "scale": -1000},
+   {"id": "percolation", "label": "Percolation to soil 2", "unit": "mm/d", "source": "{unit}__percolation_1_2:flow", "divide_by": "{unit}__Soil_1:area", "scale": 1000}
+  ]},
+  {"id": "Soil_2", "label": "Soil 2", "variables": [
+   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_2:theta", "map": true, "min": 0.05, "max": 0.45, "palette": "moisture"},
+   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_2:Se", "min": 0, "max": 1},
+   {"id": "pressure_head", "label": "Pressure head", "unit": "m", "source": "{unit}__Soil_2:pressure_head"},
+   {"id": "et", "label": "Evapotranspiration", "unit": "mm/d", "source": "{unit}__Soil_2:Evapotranspiration", "divide_by": "{unit}__Soil_2:area", "scale": -1000},
+   {"id": "percolation", "label": "Percolation to soil 3", "unit": "mm/d", "source": "{unit}__percolation_2_3:flow", "divide_by": "{unit}__Soil_2:area", "scale": 1000}
+  ]},
+  {"id": "Soil_3", "label": "Soil 3", "variables": [
+   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_3:theta", "map": true, "min": 0.05, "max": 0.45, "palette": "moisture"},
+   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_3:Se", "min": 0, "max": 1},
+   {"id": "pressure_head", "label": "Pressure head", "unit": "m", "source": "{unit}__Soil_3:pressure_head"},
+   {"id": "recharge", "label": "Recharge to groundwater", "unit": "mm/d", "source": "{unit}__recharge:flow", "divide_by": "{unit}__Soil_3:area", "scale": 1000},
+   {"id": "recharge_ns", "label": "Recharge to near-stream aquifer", "unit": "mm/d", "source": "{unit}__recharge_near_stream:flow", "divide_by": "{unit}__Near_Stream_Aquifer:area", "scale": 1000}
+  ]},
+  {"id": "Groundwater", "label": "Groundwater", "variables": [
+   {"id": "thickness", "label": "Saturated thickness", "unit": "m", "source": "{unit}__Groundwater:depth", "map": true, "palette": "head"},
+   {"id": "head", "label": "Water table elevation", "unit": "m", "source": "{unit}__Groundwater:piezometric_head"},
+   {"id": "to_near_stream", "label": "Flow to near-stream aquifer", "unit": "m3/s", "source": "{unit}__hillslope_to_near_stream:flow", "scale": 1.1574074e-5}
+  ]},
+  {"id": "Near_Stream_Aquifer", "label": "Near-stream aquifer", "variables": [
+   {"id": "thickness", "label": "Saturated thickness", "unit": "m", "source": "{unit}__Near_Stream_Aquifer:depth", "map": true, "palette": "head"},
+   {"id": "head", "label": "Water table elevation", "unit": "m", "source": "{unit}__Near_Stream_Aquifer:piezometric_head"},
+   {"id": "baseflow", "label": "Discharge to stream (baseflow)", "unit": "m3/s", "source": "{unit}-{segment}-gw:flow", "scale": 1.1574074e-5}
+  ]},
+  {"id": "Stream", "label": "Stream", "map_layer": "reaches", "variables": [
+   {"id": "flow", "label": "Flow", "unit": "m3/s", "source": "{segment}-*:flow", "scale": 1.1574074e-5, "map": true, "palette": "flow", "log": true},
+   {"id": "depth", "label": "Water depth", "unit": "m", "source": "{segment}:depth", "map": true, "palette": "depth"},
+   {"id": "velocity", "label": "Velocity", "unit": "m/s", "source": "{segment}-*:velocity"},
+   {"id": "storage", "label": "Channel storage", "unit": "m3", "source": "{segment}:Storage"}
+  ]}
+ ]
+}

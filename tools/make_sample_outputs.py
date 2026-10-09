@@ -51,7 +51,7 @@ ELEMENTS = [
     {"id": "Near_Stream_Aquifer", "label": "Near-stream aquifer",
      "variables": [{"id": "water_table", "label": "Water table above stream bed", "unit": "m", "min": -1, "max": 3,
                     "palette": "head"}]},
-    {"id": "Stream", "label": "Stream",
+    {"id": "Stream", "label": "Stream", "map_layer": "reaches",
      "variables": [{"id": "storage", "label": "Channel storage", "unit": "m3", "palette": "flow"}]},
 ]
 

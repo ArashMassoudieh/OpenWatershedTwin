@@ -37,10 +37,17 @@ git clone --recurse-submodules https://github.com/ArashMassoudieh/OpenWatershedT
 reads the twin's static output files over HTTP (`docs/viewer_data.md`): sub-catchment polygons coloured by the
 selected HRU element and variable, streams, gages; zoom (wheel, double-click), pan (drag), fit; a time slider through
 the recent past and the forecast; right-click on a sub-catchment or a gage for history and forecast charts (rainfall,
-element series, USGS observations) with CSV export. `viewer/sample/` holds sample outputs made from a Rock Creek model
-run (`tools/make_sample_outputs.py`):
+element series, USGS observations) with CSV export. What the map and charts show is set per watershed in
+`watersheds/<name>/viewer_config.json` (docs/viewer_data.md).
+
+Sample outputs for the viewer (not in git, about 20 MB) come from a Rock Creek kernel built with outputs
+(`ohq_generate --outputs`, list from `tools/twin_outputs.py spec`) run on its calibration forcing:
 
 ```sh
+tools/twin_outputs.py spec --config watersheds/RockCreek/viewer_config.json --out watersheds/RockCreek/kernel_outputs.txt
+tools/twin_outputs.py sample --config watersheds/RockCreek/viewer_config.json --kernel <libRockCreekWY1819.so> \
+    --params "<calibrated parameters>" --rain-dir <forcing dir> --obs-dir <obs dir> --now 2019-07-01 \
+    --out viewer/sample --cache cache/sample_run.npz
 qmake viewer/OWTViewer.pro && make && ./OWTViewer --base viewer/sample            # desktop
 source ~/emsdk/emsdk_env.sh && ~/Qt/6.8.2/wasm_singlethread/bin/qmake viewer/OWTViewer.pro && make
 # serve OWTViewer.html/.js/.wasm, qtloader.js and the contents of viewer/sample from one folder

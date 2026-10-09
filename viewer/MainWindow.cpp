@@ -102,15 +102,17 @@ void MainWindow::buildUi()
         m->setAttribute(Qt::WA_DeleteOnClose);
         m->addSection(unit);
         const QString var = currentVariable().value("label").toString();
-        m->addAction(tr("%1: history and forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Both, false); });
-        m->addAction(tr("%1: history").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::History, false); });
-        m->addAction(tr("%1: forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, false); });
+        const QString elabel = currentVariable().value("element_label").toString();
+        m->addAction(tr("%1: history and forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Both, ChartScope::Variable); });
+        m->addAction(tr("%1: history").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::History, ChartScope::Variable); });
+        m->addAction(tr("%1: forecast").arg(var), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, ChartScope::Variable); });
         m->addSeparator();
-        m->addAction(tr("All elements of %1").arg(unit), this, [this, unit]() { showUnit(unit, TimeMode::Both, true); });
-        m->addAction(tr("All elements, forecast"), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, true); });
+        m->addAction(tr("%1: all variables").arg(elabel), this, [this, unit]() { showUnit(unit, TimeMode::Both, ChartScope::Element); });
+        m->addAction(tr("All elements of %1").arg(unit), this, [this, unit]() { showUnit(unit, TimeMode::Both, ChartScope::All); });
+        m->addAction(tr("All elements, forecast"), this, [this, unit]() { showUnit(unit, TimeMode::Forecast, ChartScope::All); });
         m->popup(pos);
     });
-    connect(map_, &MapView::unitClicked, this, [this](const QString &unit) { showUnit(unit, TimeMode::Both, false); });
+    connect(map_, &MapView::unitClicked, this, [this](const QString &unit) { showUnit(unit, TimeMode::Both, ChartScope::Variable); });
     connect(map_, &MapView::gageContextMenu, this, [this](const QString &gage, const QPoint &pos) {
         auto *m = new QMenu(this);
         m->setAttribute(Qt::WA_DeleteOnClose);
@@ -140,6 +142,16 @@ void MainWindow::load(std::function<void()> ready)
         auto layerDone = [this, ready]() {
             if (--pendingLayers_ == 0) loadOutputs(ready);
         };
+        for (const QJsonValue &mv : layers.value("masks").toArray())
+        {
+            ++pendingLayers_;
+            const QJsonObject l = mv.toObject();
+            data_->getJson(l.value("url").toString(), [this, l, layerDone](const QJsonDocument &d, const QString &e) {
+                if (!e.isEmpty()) error(e);
+                else map_->addMask(d, l.value("label").toString());
+                layerDone();
+            });
+        }
         for (const QString &name : {QString("boundary"), QString("units"), QString("reaches"), QString("points")})
         {
             if (!layers.contains(name)) continue;
@@ -200,11 +212,20 @@ void MainWindow::onElementChanged()
     variableBox_->clear();
     for (const QJsonValue &ev : elements_)
         if (ev.toObject().value("id").toString() == id)
-            for (const QJsonValue &vv : ev.toObject().value("variables").toArray())
-                variableBox_->addItem(vv.toObject().value("label").toString(), vv.toObject().value("id").toString());
+        {
+            // the map lists the variables marked "map": true (all of them when none is marked);
+            // the charts show every variable
+            const QJsonArray vars = ev.toObject().value("variables").toArray();
+            bool anyMarked = false;
+            for (const QJsonValue &vv : vars) anyMarked |= vv.toObject().contains("map");
+            for (const QJsonValue &vv : vars)
+                if (!anyMarked || vv.toObject().value("map").toBool())
+                    variableBox_->addItem(vv.toObject().value("label").toString(), vv.toObject().value("id").toString());
+        }
     variableBox_->setEnabled(variableBox_->count() > 1);
     updateMap();
-    if (!selectedUnit_.isEmpty() && unitDocs_.contains(selectedUnit_)) showUnit(selectedUnit_, TimeMode::Both, false);
+    if (!selectedUnit_.isEmpty() && unitDocs_.contains(selectedUnit_) && selectedScope_ != ChartScope::All)
+        showUnit(selectedUnit_, TimeMode::Both, selectedScope_);
 }
 
 QString MainWindow::currentKey() const
@@ -226,6 +247,7 @@ QJsonObject MainWindow::currentVariable() const
                 {
                     QJsonObject o = vv.toObject();
                     o["element_label"] = ev.toObject().value("label").toString();
+                    o["map_layer"] = ev.toObject().value("map_layer").toString("units");
                     return o;
                 }
     return QJsonObject();
@@ -279,6 +301,16 @@ void MainWindow::updateMap()
     cs.max = var.contains("max") ? var.value("max").toDouble() : (std::isfinite(hi) ? hi : 1.0);
     cs.label = var.value("element_label").toString() + ": " + var.value("label").toString();
     cs.unit = var.value("unit").toString();
+    cs.onReaches = var.value("map_layer").toString() == "reaches";
+    cs.log = var.value("log").toBool();
+    if (cs.log)                                      // log scale: lower end from the positive data
+    {
+        double pmin = std::numeric_limits<double>::infinity();
+        for (auto it = vals.constBegin(); it != vals.constEnd(); ++it)
+            for (const QJsonValue &x : it.value().toArray())
+                if (x.isDouble() && x.toDouble() > 0) pmin = std::min(pmin, x.toDouble());
+        if (!var.contains("min")) cs.min = std::isfinite(pmin) ? std::max(pmin, cs.max * 1e-4) : 1e-3;
+    }
     map_->setValues(values, cs);
 }
 
@@ -314,21 +346,25 @@ void MainWindow::withUnitDoc(const QString &unit, std::function<void(const QJson
     });
 }
 
-void MainWindow::showUnit(const QString &unit, TimeMode mode, bool allElements)
+void MainWindow::showUnit(const QString &unit, TimeMode mode, ChartScope scope)
 {
     selectedUnit_ = unit;
+    selectedScope_ = scope;
     map_->setSelectedUnit(unit);
-    withUnitDoc(unit, [this, unit, mode, allElements](const QJsonObject &doc) {
+    withUnitDoc(unit, [this, unit, mode, scope](const QJsonObject &doc) {
         QStringList keys;
-        if (allElements)
-        {
-            for (const QJsonValue &ev : elements_)
-                for (const QJsonValue &vv : ev.toObject().value("variables").toArray())
-                    keys << ev.toObject().value("id").toString() + ":" + vv.toObject().value("id").toString();
-        }
-        else
+        const QString element = elementGroup_->checkedButton() ? elementGroup_->checkedButton()->property("element").toString() : QString();
+        if (scope == ChartScope::Variable)
             keys << currentKey();
-        const QString what = allElements ? tr("all elements") : currentVariable().value("element_label").toString();
+        else
+            for (const QJsonValue &ev : elements_)
+                if (scope == ChartScope::All || ev.toObject().value("id").toString() == element)
+                    for (const QJsonValue &vv : ev.toObject().value("variables").toArray())
+                        keys << ev.toObject().value("id").toString() + ":" + vv.toObject().value("id").toString();
+        const QString elabel = currentVariable().value("element_label").toString();
+        const QString what = scope == ChartScope::All ? tr("all elements")
+                             : scope == ChartScope::Element ? tr("%1, all variables").arg(elabel)
+                                                            : elabel;
         const QString when = mode == TimeMode::History ? tr("history") : mode == TimeMode::Forecast ? tr("forecast")
                                                                                                     : tr("history and forecast");
         charts_->show(QString("%1: %2, %3").arg(unit, what, when), doc, keys, mode);

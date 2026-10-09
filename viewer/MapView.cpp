@@ -57,7 +57,9 @@ const QColor kBackground("#f4f3ef");
 QColor ColorScale::color(double v) const
 {
     if (!std::isfinite(v)) return kNoData;
-    const double f = (max > min) ? (v - min) / (max - min) : 0.5;
+    double f = (max > min) ? (v - min) / (max - min) : 0.5;
+    if (log && min > 0 && max > min)
+        f = v > 0 ? (std::log(v) - std::log(min)) / (std::log(max) - std::log(min)) : 0.0;
     return ramp(paletteStops(palette), f);
 }
 
@@ -203,6 +205,31 @@ void MapView::setBoundary(const QJsonDocument &doc)
     update();
 }
 
+void MapView::addMask(const QJsonDocument &doc, const QString &label)
+{
+    setOriginFrom(doc, originSet_, lon0_, lat0_, kx_, ky_);
+    Mask m;
+    m.label = label;
+    m.path.setFillRule(Qt::WindingFill);
+    for (const QJsonValue &fv : doc.object().value("features").toArray())
+    {
+        const QJsonObject g = fv.toObject().value("geometry").toObject();
+        if (g.value("type").toString() == "Polygon") m.path.addPath(ringsToPath(g.value("coordinates").toArray()));
+        else if (g.value("type").toString() == "MultiPolygon")
+            for (const QJsonValue &poly : g.value("coordinates").toArray()) m.path.addPath(ringsToPath(poly.toArray()));
+    }
+    masks_.push_back(m);
+    update();
+}
+
+QString MapView::maskAt(const QPointF &screen) const
+{
+    const QPointF w = toWorld(screen);
+    for (const Mask &m : masks_)
+        if (m.path.boundingRect().contains(w) && m.path.contains(w)) return m.label;
+    return QString();
+}
+
 void MapView::setValues(const QHash<QString, double> &values, const ColorScale &scale)
 {
     values_ = values;
@@ -290,14 +317,32 @@ void MapView::paintMap(QPainter &p, const QSize &size)
     for (const MapFeature &m : units_)
     {
         const double v = values_.value(m.id, std::numeric_limits<double>::quiet_NaN());
-        p.setBrush(hasValues_ ? scale_.color(v) : QColor("#dfe7d8"));
+        p.setBrush(hasValues_ && !scale_.onReaches ? scale_.color(v) : QColor("#dfe7d8"));
         p.setPen(QPen(QColor(90, 90, 90, 150), 0.7));
         p.drawPath(t.map(m.path));
     }
+    for (const Mask &m : masks_)
+    {
+        p.setPen(QPen(QColor(110, 110, 110, 160), 0.6));
+        p.setBrush(QColor(200, 200, 200, 200));
+        p.drawPath(t.map(m.path));
+        p.setBrush(QBrush(QColor(120, 120, 120, 170), Qt::BDiagPattern));
+        p.drawPath(t.map(m.path));
+    }
+    const bool colourReaches = hasValues_ && scale_.onReaches;
+    p.setBrush(Qt::NoBrush);
+    if (colourReaches)                               // dark casing so pale colours stay visible
+        for (const MapFeature &m : reaches_)
+        {
+            p.setPen(QPen(QColor(60, 60, 60, 160), 3.0 + 4.0 * m.width, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+            p.drawPath(t.map(m.path));
+        }
     for (const MapFeature &m : reaches_)
     {
-        p.setBrush(Qt::NoBrush);
-        p.setPen(QPen(QColor("#2b6cb0"), 0.8 + 3.2 * m.width, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        const QColor c = colourReaches ? scale_.color(values_.value(m.id, std::numeric_limits<double>::quiet_NaN()))
+                                       : QColor("#2b6cb0");
+        p.setPen(QPen(c, (colourReaches ? 1.6 : 0.8) + (colourReaches ? 4.0 : 3.2) * m.width, Qt::SolidLine,
+                      Qt::RoundCap, Qt::RoundJoin));
         p.drawPath(t.map(m.path));
     }
     for (const MapFeature &m : units_)
@@ -354,6 +399,26 @@ void MapView::paintMap(QPainter &p, const QSize &size)
 
 void MapView::paintLegend(QPainter &p, const QSize &size)
 {
+    int maskRow = size.height() - 12 - 54 - 8 - 22;
+    for (const Mask &m : masks_)                     // hatched swatch + label above the colour legend
+    {
+        QFont mf = p.font();
+        mf.setPointSizeF(8.5);
+        p.setFont(mf);
+        const int w = QFontMetrics(mf).horizontalAdvance(m.label) + 44;
+        p.setPen(QPen(QColor(0, 0, 0, 60)));
+        p.setBrush(QColor(255, 255, 255, 230));
+        p.drawRoundedRect(QRectF(12, maskRow, w, 22), 6, 6);
+        const QRectF sw(20, maskRow + 5, 18, 12);
+        p.setPen(QPen(QColor(110, 110, 110), 0.6));
+        p.setBrush(QColor(200, 200, 200));
+        p.drawRect(sw);
+        p.setBrush(QBrush(QColor(120, 120, 120), Qt::BDiagPattern));
+        p.drawRect(sw);
+        p.setPen(QColor("#222222"));
+        p.drawText(QRectF(44, maskRow + 3, w - 40, 16), Qt::AlignLeft, m.label);
+        maskRow -= 28;
+    }
     if (!hasValues_) return;
     const QString title =
         scale_.label + (scale_.unit.isEmpty() || scale_.unit == "-" ? QString() : " (" + scale_.unit + ")");
@@ -372,7 +437,9 @@ void MapView::paintLegend(QPainter &p, const QSize &size)
     const QRectF bar(x + 8, y + 22, w - 16, 10);
     for (int i = 0; i < bar.width(); ++i)
     {
-        const double v = scale_.min + (scale_.max - scale_.min) * i / bar.width();
+        const double fr = i / bar.width();
+        const double v = (scale_.log && scale_.min > 0) ? scale_.min * std::pow(scale_.max / scale_.min, fr)
+                                                         : scale_.min + (scale_.max - scale_.min) * fr;
         p.setPen(scale_.color(v));
         p.drawLine(QPointF(bar.left() + i, bar.top()), QPointF(bar.left() + i, bar.bottom()));
     }
@@ -451,6 +518,8 @@ void MapView::mouseMoveEvent(QMouseEvent *e)
             txt += ": " + (std::isfinite(v) ? QString::number(v, 'g', 4) + " " + scale_.unit : QString("no data"));
         QToolTip::showText(e->globalPosition().toPoint(), txt, this);
     }
+    else if (const QString mk = maskAt(e->position()); !mk.isEmpty())
+        QToolTip::showText(e->globalPosition().toPoint(), mk, this);
     else
         QToolTip::hideText();
 }

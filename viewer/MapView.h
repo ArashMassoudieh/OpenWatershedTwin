@@ -29,6 +29,8 @@ struct ColorScale
     QString palette = "moisture";
     double min = 0, max = 1;
     QString label, unit;
+    bool onReaches = false;     // colour the stream lines (values keyed by reach id), not the units
+    bool log = false;           // logarithmic scale (flows); needs min > 0
     QColor color(double v) const;
 };
 
@@ -44,6 +46,7 @@ public:
     void setPoints(const QJsonDocument &doc, const QString &idField, const QString &labelField,
                    const QString &flagField);
     void setBoundary(const QJsonDocument &doc);
+    void addMask(const QJsonDocument &doc, const QString &label);   // hatched areas outside the model
 
     // colouring of the units: value per unit id (NaN = no data)
     void setValues(const QHash<QString, double> &values, const ColorScale &scale);
@@ -83,6 +86,9 @@ private:
     double lon0_ = 0, lat0_ = 0, kx_ = 1, ky_ = 1;
     QVector<MapFeature> units_, reaches_, points_;
     QPainterPath boundary_;
+    struct Mask { QPainterPath path; QString label; };
+    QVector<Mask> masks_;
+    QString maskAt(const QPointF &screen) const;
     QHash<QString, double> values_;
     ColorScale scale_;
     bool hasValues_ = false;
