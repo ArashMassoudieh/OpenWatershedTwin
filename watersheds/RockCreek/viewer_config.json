@@ -49,22 +49,22 @@
    {"id": "storage", "label": "Storage", "unit": "m3", "source": "{unit}__Impervious_Reach:Storage"}
   ]},
   {"id": "Soil_1", "label": "Soil 1", "variables": [
-   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_1:theta", "map": true, "min": 0.05, "max": 0.45, "palette": "moisture"},
-   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_1:Se", "min": 0, "max": 1},
+   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_1:Se", "map": true, "min": 0, "max": 1, "palette": "moisture"},
+   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_1:theta", "min": 0.05, "max": 0.45},
    {"id": "pressure_head", "label": "Pressure head", "unit": "m", "source": "{unit}__Soil_1:pressure_head"},
    {"id": "et", "label": "Evapotranspiration", "unit": "mm/d", "source": "{unit}__Soil_1:Evapotranspiration", "divide_by": "{unit}__Soil_1:area", "scale": -1000},
    {"id": "percolation", "label": "Percolation to soil 2", "unit": "mm/d", "source": "{unit}__percolation_1_2:flow", "divide_by": "{unit}__Soil_1:area", "scale": 1000}
   ]},
   {"id": "Soil_2", "label": "Soil 2", "variables": [
-   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_2:theta", "map": true, "min": 0.05, "max": 0.45, "palette": "moisture"},
-   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_2:Se", "min": 0, "max": 1},
+   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_2:Se", "map": true, "min": 0, "max": 1, "palette": "moisture"},
+   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_2:theta", "min": 0.05, "max": 0.45},
    {"id": "pressure_head", "label": "Pressure head", "unit": "m", "source": "{unit}__Soil_2:pressure_head"},
    {"id": "et", "label": "Evapotranspiration", "unit": "mm/d", "source": "{unit}__Soil_2:Evapotranspiration", "divide_by": "{unit}__Soil_2:area", "scale": -1000},
    {"id": "percolation", "label": "Percolation to soil 3", "unit": "mm/d", "source": "{unit}__percolation_2_3:flow", "divide_by": "{unit}__Soil_2:area", "scale": 1000}
   ]},
   {"id": "Soil_3", "label": "Soil 3", "variables": [
-   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_3:theta", "map": true, "min": 0.05, "max": 0.45, "palette": "moisture"},
-   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_3:Se", "min": 0, "max": 1},
+   {"id": "saturation", "label": "Effective saturation", "unit": "-", "source": "{unit}__Soil_3:Se", "map": true, "min": 0, "max": 1, "palette": "moisture"},
+   {"id": "moisture", "label": "Moisture content", "unit": "-", "source": "{unit}__Soil_3:theta", "min": 0.05, "max": 0.45},
    {"id": "pressure_head", "label": "Pressure head", "unit": "m", "source": "{unit}__Soil_3:pressure_head"},
    {"id": "recharge", "label": "Recharge to groundwater", "unit": "mm/d", "source": "{unit}__recharge:flow", "divide_by": "{unit}__Soil_3:area", "scale": 1000},
    {"id": "recharge_ns", "label": "Recharge to near-stream aquifer", "unit": "mm/d", "source": "{unit}__recharge_near_stream:flow", "divide_by": "{unit}__Near_Stream_Aquifer:area", "scale": 1000}
