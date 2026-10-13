@@ -1,0 +1,34 @@
+{
+ "name": "RockCreek",
+ "title": "Rock Creek (Maryland and Washington, DC) OpenHydroQual watershed model",
+ "model_file": "/home/arash/Dropbox/Rock Creek Model - OHQ/model/valWY2025.ohq",
+ "system_values": {"alloutputfile": "output.txt", "observed_outputfile": "observed_output.txt"},
+ "parameters_from": "deployments/live/config.json",
+ "templates_dir": "../../OpenHydroQual/resources",
+ "observation_dirs": ["/home/arash/Dropbox/Rock Creek Model - OHQ/model/obs"],
+ "gis": {
+  "subcatchments": "gis/subcatchments.geojson",
+  "reaches": "gis/reaches.geojson",
+  "control_points": "gis/control_points.geojson",
+  "boundary": "gis/watershed_boundary.geojson",
+  "extra_layers": {"combined_sewer_area": "gis/combined_sewer_area.geojson"}
+ },
+ "extra_tables": {
+  "subcatchment_source_attributes": "/home/arash/Dropbox/Rock Creek Model - OHQ/gis/subcatchment_attributes.csv",
+  "gage_section_fits": "/home/arash/Dropbox/Rock Creek Model - OHQ/gis/gage_geometry.csv"
+ },
+ "readme": {
+  "summary": "Continuous, physically based model of the Rock Creek watershed (Maryland and Washington, DC) from its headwaters to the Potomac River, calibrated to USGS flow and stage at Turkey Branch (01647850), Rock Creek at Sherrill Dr (01648000) and at Joyce Rd (01648010). It has 54 urban hydrologic response units with three soil layers, regional and near-stream groundwater, compound channels and the Needwood and Frank reservoirs, and is built in OpenHydroQual. This is the model behind the live digital twin. Forcing in this package: NOAA AORC hourly precipitation and gridMET reference evapotranspiration, October 2016 to September 2025 (the live twin uses MRMS radar rainfall).",
+  "units": "- Time: days since 1899-12-30 00:00 UTC (the spreadsheet serial date; 45931.0 = 2025-10-01 00:00 UTC).\n- SI units throughout: lengths and elevations in m (elevations NAVD88), areas in m², flows in m³/day, hydraulic conductivities in m/day, volumes in m³.\n- `forcing/precip_scNN.csv`: `t_start,t_end,depth` with the precipitation depth in m over the interval (wet hours only; gaps are zero). `forcing/et_scNN.csv`: `t,rate` daily reference ET in m/day (gridMET ASCE short grass); the model scales it by the crop coefficients `corr_fact`.\n- `observations/<site>_flow.csv`: `t,flow` in m³/day; `<site>_stage.csv`: `t,depth` in m above the zero-flow gage height (USGS gage height minus `gzf_fit_m` in the `gage_section_fits` table). Hourly in storm events, daily means otherwise.\n- Coordinates: the GeoPackage layers keep the CRS of the source data (WGS84 longitude/latitude).",
+  "run": "1. Install OpenHydroQual (https://github.com/ArashMassoudieh/OpenHydroQual).\n2. Unzip this package and keep the folder structure (the model file refers to `templates/`, `forcing/` and `observations/` by relative paths). If a template is not found next to the model, OpenHydroQual falls back to its own template folder; use the copies supplied here, since the model depends on `riparian_urban_hru.json` and `compound_channel.json` as included.\n3. Open `RockCreek_model.ohq` in the OpenHydroQual GUI and run it, or use the console: `OpenHydroQual-Console RockCreek_model.ohq -w <output folder>`.\n4. Outputs go to `output.txt` (all state variables) and `observed_output.txt` (the modelled values at the observation points, with fit statistics printed at the end of the run). The nine-year run with the interpreter takes a long time; shorten `simulation_end_time` at the top of the model file for a first test.",
+  "documentation_url": "https://github.com/ArashMassoudieh/OpenWatershedTwin/blob/main/docs/RockCreek/rockcreek_model.pdf",
+  "viewer_url": "https://openhydrotwin.com/RockCreek/",
+  "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "license_text": "This model package (model file, derived data, GeoPackage and documentation) is licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/\n\nYou may share and adapt it for any purpose, including commercially, provided you give appropriate credit (see the citations in README.md), link to the license and indicate if changes were made.\n\nThird-party inputs keep their own terms: USGS streamflow data, NOAA AORC precipitation, gridMET (University of California Merced), USDA NRCS SSURGO soils, Chesapeake Conservancy land cover and USGS 3DEP/NHDPlus data are public-domain or openly licensed by their providers.\n\nOpenHydroQual templates (templates/) are part of OpenHydroQual and distributed under its license.\n",
+  "citations": [
+   "Massoudieh, A., Nguyen, T., and Murthy, S. (2023). OpenHydroQual: A generic, object-oriented environment for modelling environmental systems. Environmental Modelling & Software, 164, 105707. https://doi.org/10.1016/j.envsoft.2023.105707",
+   "Massoudieh, A., and Shakouri, M. (2025). OpenHydroQual: Theory and Equations Manual.",
+   "Massoudieh, A. (2026). Rock Creek watershed model: structure, data and validation. OpenWatershedTwin model documentation. https://github.com/ArashMassoudieh/OpenWatershedTwin/blob/main/docs/RockCreek/rockcreek_model.pdf"
+  ]
+ }
+}

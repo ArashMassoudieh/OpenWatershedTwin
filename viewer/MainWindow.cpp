@@ -58,8 +58,12 @@ void MainWindow::buildUi()
     tb->addSeparator();
     tb->addAction(tr("Fit"), this, [this]() { map_->fitToExtent(); });
     tb->addAction(tr("Refresh"), this, &MainWindow::refresh);
-    tb->addSeparator();
-    linkBar_ = tb;
+
+    // links from the config (documentation, model download) at the right end of the status bar: always visible,
+    // where the element toolbar would push them into its overflow menu
+    linkBar_ = new QToolBar;
+    linkBar_->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    linkBar_->setStyleSheet("QToolBar { border: 0; spacing: 6px; } QToolButton { color: #2b6cb0; }");
 
     auto *central = new QWidget;
     auto *v = new QVBoxLayout(central);
@@ -90,6 +94,7 @@ void MainWindow::buildUi()
 
     statusLabel_ = new QLabel;
     statusBar()->addWidget(statusLabel_, 1);
+    statusBar()->addPermanentWidget(linkBar_);
 
     playTimer_ = new QTimer(this);
     playTimer_->setInterval(600);

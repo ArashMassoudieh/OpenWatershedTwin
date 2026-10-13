@@ -191,6 +191,14 @@ done
 # viewer
 "${RSYNC[@]}" "${WASM_BUILD}/index.html" "${WASM_BUILD}/OWTViewer.js" "${WASM_BUILD}/OWTViewer.wasm" \
     "${WASM_BUILD}/qtloader.js" "${EC2_USER}@${EC2_HOST}:${R_WEB}/"
+# model package behind the viewer's "Download model" link (built by tools/model_package.py)
+PACKAGE="${REPO}/build/packages/${WATERSHED}_model.zip"
+if [[ -f "${PACKAGE}" ]]; then
+    "${SSH[@]}" mkdir -p "${R_WEB}/download"
+    "${RSYNC[@]}" "${PACKAGE}" "${EC2_USER}@${EC2_HOST}:${R_WEB}/download/"
+else
+    log "No model package (${PACKAGE}): the Download model link will not work; run tools/model_package.py"
+fi
 if [[ $WITH_STATE == 1 ]]; then
     log "Copying the local state and outputs"
     "${RSYNC[@]}" --delete "${REPO}/${DEP_REL}/state/" "${EC2_USER}@${EC2_HOST}:${R_REPO}/${DEP_REL}/state/"

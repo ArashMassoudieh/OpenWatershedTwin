@@ -4,7 +4,9 @@
  "credit": "Built with <a href=\"https://github.com/ArashMassoudieh/OpenWatershedTwin\">OpenWatershedTwin</a> and <a href=\"https://github.com/ArashMassoudieh/OpenHydroQual\">OpenHydroQual</a> \u00b7 The Catholic University of America",
  "links": [
   {"label": "Model documentation", "tooltip": "Model structure, governing equations, calibration and validation (PDF)",
-   "url": "https://github.com/ArashMassoudieh/OpenWatershedTwin/blob/main/docs/RockCreek/rockcreek_model.pdf"}
+   "url": "https://github.com/ArashMassoudieh/OpenWatershedTwin/blob/main/docs/RockCreek/rockcreek_model.pdf"},
+  {"label": "Download model", "tooltip": "Zip: the calibrated OpenHydroQual model, its forcing and observations, and a GeoPackage of every sub-catchment and stream with all model parameters (about 5 MB, CC BY 4.0)",
+   "url": "https://openhydrotwin.com/RockCreek/download/RockCreek_model.zip"}
  ],
  "layers": {
   "units": {"url": "gis/subcatchments.geojson", "id_field": "id", "label_field": "id"},
