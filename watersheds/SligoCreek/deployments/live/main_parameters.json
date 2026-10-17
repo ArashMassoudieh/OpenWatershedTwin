@@ -1,0 +1,17 @@
+{
+ "parameters": {
+  "p_Ksat": 9.900231908,
+  "p_Ksat_s": 0.002174135237,
+  "p_imp": 0.4426669932,
+  "p_Kc": 0.4320372429,
+  "p_Kc2": 0.2369959694,
+  "p_gwKl": 21.48293204,
+  "p_gwpor": 0.2172552673,
+  "p_nch": 0.05245151764,
+  "p_riser": 0.06545761063,
+  "p_fr": 0.4879269245,
+  "p_nsSy": 0.01194033899,
+  "p_nsK": 13.00094847
+ },
+ "parameter_set": "Sligo Creek LM optimum (calib/WY1819v3ar1_v2f5LM/LM_output.txt; final negative log-likelihood: -8.95315372e+03); 95 % band: MCMC calib/WY1819v3ar1_v2f5MCMC/stage1, steps >= 100: 1600 samples; 200 drawn (seed 1)"
+}

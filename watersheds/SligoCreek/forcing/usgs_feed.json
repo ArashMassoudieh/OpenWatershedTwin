@@ -1,0 +1,9 @@
+{
+ "output_dir": "../deployments/live/observations",
+ "days": 45,
+ "gages": {
+  "01650800": {
+   "zero_flow_gh_m": 0.0
+  }
+ }
+}
