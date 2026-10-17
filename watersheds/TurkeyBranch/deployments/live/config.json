@@ -1,0 +1,59 @@
+{
+ "deployment": {
+  "name": "TurkeyBranch_live",
+  "port": 8201
+ },
+ "solver": {
+  "backend": "codegen",
+  "library": "../../../../build/kernels/TurkeyBranch_v2/build/libTurkeyTwin.so",
+  "dt0": 0.0005,
+  "parameters": {
+   "p_Ksat": 0.02985204,
+   "p_Ksat_s": 1.117117,
+   "p_imp": 0.3777066,
+   "p_Kc": 0.4833764,
+   "p_Kc2": 0.1336477,
+   "p_gwK": 347.2289,
+   "p_gwKl": 496.1747,
+   "p_gwpor": 0.006890011,
+   "p_nch": 0.07211694,
+   "p_dsew": 0.4728459
+  },
+  "parameter_set": "Turkey Branch MCMC, highest posterior sample (row no. 9850, logp 11317.7); calib/WY2225F_v2MCMC, steps >= 300, without chains 13: 2970 samples; 200 drawn (seed 1)",
+  "ensemble": {
+   "file": "ensemble.csv",
+   "threads": 8,
+   "quantiles": [
+    0.025,
+    0.975
+   ],
+   "label": "95% parameter-uncertainty band: 2.5-97.5 percentiles of 200 runs with posterior parameter sets (MCMC)"
+  }
+ },
+ "forcing": {
+  "file": "forcing_map.json"
+ },
+ "viewer": {
+  "config": "../../viewer_config.json",
+  "web_dir": "web",
+  "observations_dir": "observations"
+ },
+ "runtime": {
+  "interval": "6hr",
+  "forecast_horizon": "7day",
+  "start_datetime": "2024-10-01T00:00:00Z",
+  "catch_up": true,
+  "data_latency": "1hr",
+  "check_interval": "15min",
+  "time_acceleration": 1,
+  "pre_cycle_command": "sh ../../../../tools/twin_feeds.sh TurkeyBranch",
+  "pre_cycle_timeout_s": 1800,
+  "state_variables": [],
+  "keep_debug_outputs": false
+ },
+ "observations": {
+  "save_interval": "1hr",
+  "noise_sigma": 0.0,
+  "noise_correlation_time": "6hr"
+ }
+}

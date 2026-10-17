@@ -1,6 +1,7 @@
 #include "ChartPanel.h"
 
 #include <QAreaSeries>
+#include <QCheckBox>
 #include <QChart>
 #include <QChartView>
 #include <QDateTime>
@@ -59,8 +60,10 @@ Range timeWindow(const QJsonObject &doc, TimeMode mode)
     return {std::max(tmin, now - 45.0), tmax};       // recent history and the forecast
 }
 
+bool hasBand(const QJsonObject &s) { return s.contains("lo") && s.contains("hi"); }
+
 QChartView *makeChart(const QString &title, const QString &unit, const QJsonObject &s, const QJsonObject *s2,
-                      const QString &label2, Range r, double now, bool bars, int height)
+                      const QString &label2, Range r, double now, bool bars, int height, bool band)
 {
     auto *chart = new QChart;
     chart->setTitle(title);
@@ -116,6 +119,34 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
             ls->attachAxis(ay);
         }
     };
+    // band (lo..hi) behind the model line
+    if (band && !bars && hasBand(s))
+    {
+        auto *up = new QLineSeries, *dn = new QLineSeries;
+        const QJsonArray t = s.value("t").toArray(), lo = s.value("lo").toArray(), hi = s.value("hi").toArray();
+        for (int i = 0; i < t.size() && i < lo.size() && i < hi.size(); ++i)
+        {
+            if (lo[i].isNull() || hi[i].isNull()) continue;
+            const double ti = t[i].toDouble();
+            if (ti < r.t0 - 1 || ti > r.t1 + 1) continue;
+            up->append(toMs(ti), hi[i].toDouble());
+            dn->append(toMs(ti), lo[i].toDouble());
+            ymin = std::min(ymin, lo[i].toDouble());
+            ymax = std::max(ymax, hi[i].toDouble());
+        }
+        if (up->count() > 1)
+        {
+            auto *area = new QAreaSeries(up, dn);
+            area->setName(QObject::tr("95% interval"));
+            area->setBrush(QColor(33, 113, 181, 90));
+            area->setPen(Qt::NoPen);
+            chart->addSeries(area);
+            area->attachAxis(ax);
+            area->attachAxis(ay);
+            chart->legend()->setVisible(true);
+        }
+        else { delete up; delete dn; }
+    }
     addLine(s, s.value("label").toString(), bars ? QColor("#4292c6") : QColor("#2171b5"), bars);
     if (s2) addLine(*s2, label2, QColor("#d94801"), false);       // observations
     if (!std::isfinite(ymin)) { ymin = 0; ymax = 1; }
@@ -163,10 +194,18 @@ ChartPanel::ChartPanel(QWidget *parent) : QWidget(parent)
     QFont f = title_->font();
     f.setBold(true);
     title_->setFont(f);
+    intervals_ = new QCheckBox(tr("95% intervals"));
+    intervals_->setChecked(false);
+    intervals_->setEnabled(false);
+    intervals_->setToolTip(tr("No uncertainty band for the series shown"));
+    connect(intervals_, &QCheckBox::toggled, this, [this]() {
+        if (!doc_.isEmpty()) show(title_->text(), doc_, keys_, mode_);
+    });
     auto *csv = new QPushButton(tr("CSV"));
     csv->setToolTip(tr("Save the series shown as CSV"));
     connect(csv, &QPushButton::clicked, this, &ChartPanel::exportCsv);
     head->addWidget(title_, 1);
+    head->addWidget(intervals_);
     head->addWidget(csv);
     outer->addLayout(head);
     auto *scroll = new QScrollArea;
@@ -192,6 +231,12 @@ void ChartPanel::clear(const QString &message)
     keys_.clear();
 }
 
+void ChartPanel::setIntervalText(const QString &label, const QString &tooltip)
+{
+    if (!label.isEmpty()) intervals_->setText(label);
+    intervalTip_ = tooltip;
+}
+
 void ChartPanel::show(const QString &title, const QJsonObject &unitDoc, const QStringList &keys, TimeMode mode)
 {
     clear(title);
@@ -203,12 +248,18 @@ void ChartPanel::show(const QString &title, const QJsonObject &unitDoc, const QS
     const QJsonObject series = doc.value("series").toObject();
     const double now = doc.value("now").toDouble();
     const Range r = timeWindow(doc, mode);
+    bool anyBand = false;
+    for (const QString &k : keys) anyBand = anyBand || hasBand(series.value(k).toObject());
+    intervals_->setEnabled(anyBand);
+    intervals_->setToolTip(anyBand ? (intervalTip_.isEmpty() ? tr("Shade the 95% interval of the model") : intervalTip_)
+                                   : tr("No uncertainty band for the series shown"));
+    const bool band = anyBand && intervals_->isChecked();
     int at = 0;
     if (series.contains("rain"))
     {
         const QJsonObject rain = series.value("rain").toObject();
         charts_->insertWidget(at++, makeChart(rain.value("label").toString(), rain.value("unit").toString(), rain,
-                                              nullptr, QString(), r, now, true, 150));
+                                              nullptr, QString(), r, now, true, 150, false));
     }
     for (const QString &k : keys)
     {
@@ -220,7 +271,7 @@ void ChartPanel::show(const QString &title, const QJsonObject &unitDoc, const QS
         if (paired) obs = series.value(k.left(k.size() - 6) + "_obs").toObject();
         charts_->insertWidget(at++, makeChart(s.value("label").toString(), s.value("unit").toString(), s,
                                               paired ? &obs : nullptr, paired ? obs.value("label").toString() : QString(),
-                                              r, now, false, 230));
+                                              r, now, false, 230, band));
     }
 }
 
@@ -229,7 +280,8 @@ void ChartPanel::exportCsv()
     if (doc_.isEmpty()) return;
     const QJsonObject series = doc_.value("series").toObject();
     const Range r = timeWindow(doc_, mode_);
-    QByteArray out = "series,unit,time_utc,value\n";
+    const bool band = intervals_->isEnabled() && intervals_->isChecked();
+    QByteArray out = band ? "series,unit,time_utc,value,lo,hi\n" : "series,unit,time_utc,value\n";
     QStringList keys = keys_;
     if (series.contains("rain")) keys.prepend("rain");
     for (const QString &k : keys)
@@ -240,13 +292,18 @@ void ChartPanel::exportCsv()
         {
             const QJsonObject s = series.value(kk).toObject();
             const QJsonArray t = s.value("t").toArray(), v = s.value("v").toArray();
+            const QJsonArray lo = s.value("lo").toArray(), hi = s.value("hi").toArray();
+            auto num = [](const QJsonArray &a, int i) {
+                return i < a.size() && !a[i].isNull() ? QString::number(a[i].toDouble(), 'g', 8) : QString();
+            };
             for (int i = 0; i < t.size() && i < v.size(); ++i)
             {
                 const double ti = t[i].toDouble();
                 if (ti < r.t0 || ti > r.t1 || v[i].isNull()) continue;
                 out += (kk + "," + s.value("unit").toString() + "," +
                         QDateTime::fromMSecsSinceEpoch(toMs(ti), QTimeZone::UTC).toString(Qt::ISODate) + "," +
-                        QString::number(v[i].toDouble(), 'g', 8) + "\n").toUtf8();
+                        QString::number(v[i].toDouble(), 'g', 8) +
+                        (band ? "," + num(lo, i) + "," + num(hi, i) : QString()) + "\n").toUtf8();
             }
         }
     }

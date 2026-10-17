@@ -156,6 +156,9 @@ void MainWindow::load(std::function<void()> ready)
         }
         outputs_ = config_.value("outputs").toString("outputs/");
         elements_ = config_.value("elements").toArray();
+        // "intervals" (optional): the text of the chart's band checkbox (the band itself comes with the data)
+        const QJsonObject iv = config_.value("intervals").toObject();
+        charts_->setIntervalText(iv.value("label").toString(), iv.value("tooltip").toString());
         buildElementButtons();
         const QJsonObject layers = config_.value("layers").toObject();
         pendingLayers_ = 0;

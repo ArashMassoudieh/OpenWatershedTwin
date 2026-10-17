@@ -31,6 +31,8 @@ Config (paths relative to the config file):
     "cache_dir": "../../../cache/mrms", "weights_file": "mrms_weights.json",
     "window_days": 30, "mrms_scale": 1.08,
     "openmeteo": {"forecast_days": 10, "scale": 1.0} }
+  Optional "window_from": another twin's weights file whose MRMS window (it must contain this watershed) is used
+  instead of one around this watershed, so the two twins can share one cache_dir (the cached hours are windows).
 """
 import argparse
 import datetime as dt
@@ -79,6 +81,7 @@ class Config:
         self.om_scale = float(om.get("scale", 1.0))
         self.om_models = om.get("models")             # e.g. "best_match"; None = API default
         self.margin = float(c.get("window_margin_deg", 0.03))
+        self.window_from = (base / c["window_from"]).resolve() if c.get("window_from") else None
 
 
 # ---------------------------------------------------------------------------------------------- weights
@@ -94,6 +97,12 @@ def build_weights(cfg):
     col1 = int(np.ceil((maxx + cfg.margin + 130.0) / CELL))
     row0 = int(np.floor((55.0 - (maxy + cfg.margin)) / CELL))
     row1 = int(np.ceil((55.0 - (miny - cfg.margin)) / CELL))
+    if cfg.window_from:                                # a shared window (and cache) of another twin
+        o = json.loads(cfg.window_from.read_text())
+        r0, c0, r1, c1 = o["row0"], o["col0"], o["row0"] + o["nrows"], o["col0"] + o["ncols"]
+        if not (r0 <= row0 and row1 <= r1 and c0 <= col0 and col1 <= c1):
+            raise SystemExit(f"window_from {cfg.window_from}: its window does not contain this watershed")
+        row0, row1, col0, col1 = r0, r1, c0, c1
     cells = []
     for r in range(row0, row1):
         for c in range(col0, col1):
@@ -157,10 +166,13 @@ def get_hour(cfg, t, W, session, now):
     day are retried as Pass2."""
     f = cache_path(cfg, t)
     if f.exists():
-        z = np.load(f)
-        prod = str(z["product"])
-        if prod == "pass2" or (now - t) > dt.timedelta(days=1):
-            return z["mm"], prod
+        try:
+            z = np.load(f)
+            prod = str(z["product"])
+            if prod == "pass2" or (now - t) > dt.timedelta(days=1):
+                return z["mm"], prod
+        except Exception as e:                         # a damaged cache file: fetch the hour again
+            log(f"warning: cache {f.name}: {e}")
     for prod in ("pass2", "pass1"):
         try:
             a = fetch_window(prod, t, W, session)
@@ -169,7 +181,9 @@ def get_hour(cfg, t, W, session, now):
             a = None
         if a is not None:
             f.parent.mkdir(parents=True, exist_ok=True)
-            np.savez_compressed(f, mm=a, product=prod)
+            tmp = f.with_name(f.stem + f".tmp{time.time_ns()}.npz")   # atomic: another twin may read the cache
+            np.savez_compressed(tmp, mm=a, product=prod)
+            tmp.replace(f)
             return a, prod
     if f.exists():                                     # keep a cached Pass1 if Pass2 is still missing
         z = np.load(f)

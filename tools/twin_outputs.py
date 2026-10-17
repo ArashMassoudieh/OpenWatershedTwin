@@ -28,8 +28,6 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 EPOCH = dt.datetime(1899, 12, 30)
-GAGES = {"01647850": "Turkey Branch near Rockville", "01648000": "Rock Creek at Sherrill Dr",
-         "01648010": "Rock Creek at Joyce Rd"}
 
 
 def serial(d):
@@ -37,11 +35,17 @@ def serial(d):
 
 
 def units_table(cfg_path, cfg):
-    """unit id -> placeholder values, from the units layer"""
+    """unit id -> placeholder values, from the units layer: every property of the unit (as the engine's viewer
+    writer does), {unit} = its id and {segment} = its receiving_segment"""
     gis = json.loads((cfg_path.parent / cfg["layers"]["units"]["url"]).read_text())
     idf = cfg["layers"]["units"]["id_field"]
-    return {f["properties"][idf]: {"unit": f["properties"][idf], "segment": f["properties"]["receiving_segment"]}
-            for f in gis["features"]}
+    out = {}
+    for f in gis["features"]:
+        p = f["properties"]
+        ph = {k: (v if isinstance(v, str) else f"{v:g}") for k, v in p.items() if isinstance(v, (str, int, float))}
+        ph.update(unit=p[idf], segment=p["receiving_segment"])
+        out[p[idf]] = ph
+    return out
 
 
 def fill(pattern, ph):
@@ -227,7 +231,7 @@ def cmd_sample(a):
             json.dumps({"id": u, "now": now, "t": tl, "series": series}, separators=(",", ":")))
 
     # gages: model from the kernel's own observations (Q in m3/d, H in m), USGS from the calibration files
-    for gid, name in GAGES.items():
+    for gid, name in ((g["id"], g.get("name", g["id"])) for g in cfg.get("gages", [])):
         series = {}
         for key, scale, unit, lab, kind in (("Q", 1 / 86400, "m3/s", "Flow", "flow"), ("H", 1, "m", "Stage", "stage")):
             if f"{key}_{gid}" not in obs:

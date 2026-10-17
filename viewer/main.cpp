@@ -1,6 +1,7 @@
 // OpenWatershedTwin viewer: entry point.
 //   browser (WebAssembly): data are fetched relative to the page URL (the twin's web folder)
 //   desktop: OWTViewer [--base <folder or URL>] [--screenshot out.png [--element Soil_2] [--unit SC30]]
+#include <QCheckBox>
 #include "DataSource.h"
 #include "MainWindow.h"
 #include "MapView.h"
@@ -32,6 +33,7 @@ int main(int argc, char *argv[])
     cl.addOption({"element", "Element button to select (screenshot)", "id"});
     cl.addOption({"unit", "Unit to show in the chart panel (screenshot)", "id"});
     cl.addOption({"gage", "Gage to show in the chart panel (screenshot)", "id"});
+    cl.addOption({"intervals", "Check the 95% intervals box (screenshot)"});
     cl.addHelpOption();
     cl.process(app);
     if (cl.isSet("base")) base = cl.value("base");
@@ -45,6 +47,8 @@ int main(int argc, char *argv[])
         if (shot.isEmpty()) return;
         if (cl.isSet("element")) w.selectElement(cl.value("element"));
         if (cl.isSet("unit")) w.showUnit(cl.value("unit"), TimeMode::Both, MainWindow::ChartScope::Element);
+        if (cl.isSet("intervals"))
+            for (QCheckBox *b : w.findChildren<QCheckBox *>()) b->setChecked(true);
         if (cl.isSet("gage")) w.showGage(cl.value("gage"));
         QTimer::singleShot(1500, &app, [&]() {
             w.grab().save(shot);

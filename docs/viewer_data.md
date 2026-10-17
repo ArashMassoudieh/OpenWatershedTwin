@@ -106,6 +106,14 @@ A unit file may instead carry one time axis for all its series (`"t"` next to `"
 
 History and forecast in one series per variable; the viewer shades `t > now` as forecast.
 
+Optional band: a series may carry `"lo"` and `"hi"` arrays (same length as `v`, `null` where undefined), e.g. the
+2.5 and 97.5 percentiles of an ensemble of runs with posterior parameter sets (engine: `solver.ensemble`). The
+viewer's "95% intervals" box (unchecked by default, disabled when no series shown has a band) shades between them;
+the CSV export then adds `lo,hi` columns. Gage model series (`Q_model`, `H_model`) may carry a band the same way.
+`status.json` then has `"band": {"members": 200, "quantiles": [0.025, 0.975], "label": "..."}`, and
+`viewer_config.json` may set the checkbox text: `"intervals": {"label": "95% intervals", "tooltip": "..."}`.
+Every property of a unit in the units layer is a placeholder in `source` (`{ds_segment}`, `{gw_segment}`, ...).
+
 ## gages/<id>.json
 
 ```json

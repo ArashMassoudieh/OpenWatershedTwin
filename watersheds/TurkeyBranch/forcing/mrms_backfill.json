@@ -1,0 +1,16 @@
+{
+ "units_geojson": "../gis/subcatchments.geojson",
+ "unit_id_field": "id",
+ "output_dir": "../../../cache/mrms_history_TurkeyBranch",
+ "file_pattern": "rain_{id}.csv",
+ "cache_dir": "../../../cache/mrms",
+ "window_from": "../../RockCreek/forcing/mrms_weights.json",
+ "weights_file": "mrms_weights.json",
+ "window_days": 30,
+ "mrms_scale": 1.08,
+ "openmeteo": {
+  "forecast_days": 10,
+  "scale": 1.0
+ },
+ "note": "rain history (backfill): mrms_feed.py --config <this> --backfill 2024-10-01 <end> --no-forecast"
+}

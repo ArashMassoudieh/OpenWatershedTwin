@@ -13,6 +13,8 @@ viewer/sample/
 watersheds/*/deployments/*/*
 !watersheds/*/deployments/*/config.json
 !watersheds/*/deployments/*/forcing_map.json
+!watersheds/*/deployments/*/ensemble.csv
+!watersheds/*/deployments/*/main_parameters.json
 .claude/
 # local test deployments
 watersheds/*/deployments/iso_*/
