@@ -41,9 +41,9 @@ GRIDMET_CACHE="cache/gridmet_${WATERSHED}"
 EXTRA_FILES=""
 # shellcheck source=/dev/null
 source "${REPO}/watersheds/${WATERSHED}/deploy.env"   # KERNEL_REL (required), PAGE, RAIN_HISTORY, GRIDMET_CACHE, EXTRA_FILES
-QT_LIB="/home/arash/Qt/6.8.2/gcc_64/lib"
-QT_TLS="/home/arash/Qt/6.8.2/gcc_64/plugins/tls/libqopensslbackend.so"
-OHTWIN="${REPO}/OpenHydroTwin/build-qmake/bin/OHTwin"
+QT_LIB="${QT_LIB:-/home/arash/Qt/6.8.2/gcc_64/lib}"
+QT_TLS="${QT_TLS:-/home/arash/Qt/6.8.2/gcc_64/plugins/tls/libqopensslbackend.so}"
+OHTWIN="${OHTWIN:-${REPO}/OpenHydroTwin/build-qmake/bin/OHTwin}"
 [[ -n "${KERNEL_REL}" ]] || { echo "deploy.env: KERNEL_REL is not set" >&2; exit 1; }
 WASM_BUILD="${REPO}/build/viewer-wasm"
 DEP_REL="watersheds/${WATERSHED}/deployments/live"
