@@ -2,7 +2,18 @@
  "title": "Turkey Branch digital twin",
  "subtitle": "Streamflow, soil moisture and groundwater \u00b7 7-day forecast, updated every 6 hours",
  "credit": "Built with <a href=\"https://github.com/ArashMassoudieh/OpenWatershedTwin\">OpenWatershedTwin</a> and <a href=\"https://github.com/ArashMassoudieh/OpenHydroQual\">OpenHydroQual</a> \u00b7 The Catholic University of America",
- "links": [],
+ "links": [
+  {
+   "label": "Model documentation",
+   "tooltip": "Model structure, data, calibration, validation and the uncertainty band (PDF)",
+   "url": "https://openhydrotwin.com/TurkeyBranch/download/turkeybranch_model_description.pdf"
+  },
+  {
+   "label": "Download model",
+   "tooltip": "Zip: the calibrated OpenHydroQual model, its forcing and observations, and a GeoPackage of every sub-catchment, stream, sewer and pond with all model parameters (about 1 MB, CC BY 4.0)",
+   "url": "https://openhydrotwin.com/TurkeyBranch/download/TurkeyBranch_model.zip"
+  }
+ ],
  "layers": {
   "units": {
    "url": "gis/subcatchments.geojson",

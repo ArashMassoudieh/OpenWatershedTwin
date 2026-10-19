@@ -7,10 +7,12 @@ its OpenHydroQual model.
                          target), ds_segment (target of the stream link out of the receiving segment: a channel link,
                          not a storm-drain inlet), impervious_connected (model impervious_fraction), and the
                          optional attributes (--attrs)
-  reaches.geojson        id = unit id, segments, drainage_area_km2, length_m, slope_bed
+  reaches.geojson        id = unit id, segments (the receiving segment, the unit's sewer or groundwater segment and
+                         channel segments below it that no other unit drains to, e.g. a gage segment and a tail
+                         reach), drainage_area_km2, length_m, slope_bed
   watershed_boundary.geojson   dissolved and simplified (raster-stair outlines are smoothed by --simplify)
-  control_points.geojson       from a CSV id,kind,name,lat,lon[,da_mi2]; gages listed in --calibration get
-                               calibration = true
+  control_points.geojson       from a CSV id,kind,name,lat,lon[,da_mi2][,model_name]; gages listed in
+                               --calibration get calibration = true (kind "dam" for ponds and reservoirs)
 
 Every property of a unit is a placeholder in viewer_config.json sources ({unit}, {segment}, {ds_segment}, ...).
 
@@ -30,8 +32,13 @@ from shapely.geometry import Point
 
 def model_topology(path):
     """unit -> receiving segment, unit -> groundwater segment, segment -> downstream target, unit -> impervious"""
-    recv, gw, ds, imp = {}, {}, {}, {}
+    recv, gw, ds, imp, btype = {}, {}, {}, {}, {}
     for line in Path(path).read_text().splitlines():
+        if line.startswith("create block"):
+            t = re.search(r"type=([^,]+)", line)
+            m = re.search(r"name=([^,]+)", line)
+            if t and m:
+                btype[m.group(1)] = t.group(1)
         if line.startswith("create composite"):
             m = re.search(r"name=([^,]+)", line)
             f = re.search(r"impervious_fraction=([-+\d.eE]+)", line)
@@ -47,7 +54,7 @@ def model_topology(path):
             gw[a] = b
         elif "channel" in t.lower() and "inlet" not in t.lower():
             ds.setdefault(a, b)
-    return recv, gw, ds, imp
+    return recv, gw, ds, imp, btype
 
 
 def to_geojson(gdf, path, precision=6):
@@ -78,7 +85,22 @@ def main():
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    recv, gw, ds, imp = model_topology(a.model)
+    recv, gw, ds, imp, btype = model_topology(a.model)
+
+    def unit_segments(uid):
+        """receiving segment, the unit's own sewer/groundwater segment, and channel blocks below the receiving
+        segment that no unit drains to (gage segment, tail reach)"""
+        r = recv.get(uid, "")
+        out = [r] if r else []
+        g = gw.get(uid, "")
+        if g and g not in out and g not in recv.values():
+            out.append(g)
+        nxt = ds.get(r)
+        while nxt and nxt not in recv.values() and ("Channel" in btype.get(nxt, "") or "Segment" in btype.get(nxt, "")) \
+                and nxt not in out:
+            out.append(nxt)
+            nxt = ds.get(nxt)
+        return ",".join(out)
 
     u = gpd.read_file(a.units)
     uid = {int(r[a.id_field]): a.id_format.format(int(r[a.id_field])) for _, r in u.iterrows()}
@@ -106,7 +128,7 @@ def main():
 
     r = gpd.read_file(a.reaches)
     r["id"] = r[a.id_field].astype(int).map(uid)
-    r["segments"] = r["id"].map(lambda i: recv.get(i, ""))
+    r["segments"] = r["id"].map(unit_segments)
     da = "da_dn_km2" if "da_dn_km2" in r else ("da_km2" if "da_km2" in r else None)
     r["drainage_area_km2"] = r[da].round(4) if da else None
     cols = ["id", a.id_field, "segments", "drainage_area_km2"] + [c for c in ("length_m", "slope_bed") if c in r]

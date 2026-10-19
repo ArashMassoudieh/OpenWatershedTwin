@@ -209,6 +209,11 @@ if [[ -f "${PACKAGE}" ]]; then
 else
     log "No model package (${PACKAGE}): the Download model link will not work; run tools/model_package.py"
 fi
+# model documentation behind the viewer's "Model documentation" link (docs/<Watershed>/*.pdf), served from download/
+if compgen -G "${REPO}/docs/${WATERSHED}/*.pdf" > /dev/null; then
+    "${SSH[@]}" mkdir -p "${R_WEB}/download"
+    "${RSYNC[@]}" "${REPO}/docs/${WATERSHED}/"*.pdf "${EC2_USER}@${EC2_HOST}:${R_WEB}/download/"
+fi
 if [[ $WITH_STATE == 1 ]]; then
     log "Copying the local state and outputs"
     "${RSYNC[@]}" --delete "${REPO}/${DEP_REL}/state/" "${EC2_USER}@${EC2_HOST}:${R_REPO}/${DEP_REL}/state/"

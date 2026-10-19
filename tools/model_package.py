@@ -13,7 +13,7 @@ metadata (descriptions and units), and a README. Spec file keys (paths relative 
   parameters_from                     deployment config.json whose solver.parameters / parameter_set are written in
   templates_dir                       OpenHydroQual resources/ the kernel was generated from
   observation_dirs                    folders with the observation CSVs; files named <site>_<var>_<period>.csv are
-                                      merged across periods into observations/<site>_<var>.csv
+                                      merged across periods (_cal, _val, _all) into observations/<site>_<var>.csv
   gis: {subcatchments, reaches, control_points, boundary, extra_layers{name: path}}
   extra_tables: {name: csv}           copied into the GeoPackage as attribute tables (e.g. source attributes)
   readme: {summary, units, run, documentation_url, viewer_url, license, citations[]}
@@ -100,7 +100,7 @@ def build_model(model_file, params, files, system_values=None):
                 ln.set(key, f"forcing/{src.name}")
         if kw == "create observation" and ln.get("observed_data"):
             src = Path(ln.get("observed_data"))
-            m = re.match(r"(.+?)_(cal|val)$", src.stem)
+            m = re.match(r"(.+?)_(cal|val|all)$", src.stem)
             name = (m.group(1) if m else src.stem) + src.suffix
             files[f"observations/{name}"] = ("merge", src)
             ln.set("observed_data", f"observations/{name}")
@@ -221,7 +221,7 @@ def main():
                 continue
             down = [l for l in objects.values() if l["kind"] == "link" and l["props"].get("from") == s]
             rows.append({"unit_id": r["id"], "segment": s, "segment_role": "gage segment" if s.startswith("G") else
-                         "channel", "segment_type": o["type"], "downstream": down[0]["props"].get("to") if down else "",
+                         "storm sewer" if "sewer" in o["type"].lower() else "channel", "segment_type": o["type"], "downstream": down[0]["props"].get("to") if down else "",
                          **{k2: num(v) for k2, v in o["props"].items()},
                          "drainage_area_km2": r.get("drainage_area_km2"), "geometry": r.geometry})
     seg = gpd.GeoDataFrame(rows, crs=rc.crs)
@@ -241,7 +241,10 @@ def main():
     if len(dams) and ponds:
         key = lambda s: re.sub(r"[^a-z]", "", s.lower())
         pmap = {key(n): n for n in ponds}
-        dams["model_name"] = dams["name"].map(lambda s: pmap.get(key(s), ""))
+        # a "model_name" column of the control points names the pond directly; else match by name
+        given = dams["model_name"] if "model_name" in dams else pd.Series("", index=dams.index)
+        dams["model_name"] = [g if isinstance(g, str) and g in ponds else pmap.get(key(n), "")
+                              for g, n in zip(given, dams["name"])]
         pt = table(objects, ponds)
         for n in ponds:                                         # outlet structures as columns
             for ln_name, o in objects.items():
@@ -362,11 +365,13 @@ model file). The values are already written into the objects, so the GeoPackage 
         n_obs = 0
         for arc, src in sorted(files.items(), key=lambda kv: kv[0]):
             if isinstance(src, tuple):                         # observation series merged over periods
-                stem = re.match(r"(.+?)_(cal|val)$", src[1].stem).group(1) if re.match(r"(.+?)_(cal|val)$", src[1].stem) else src[1].stem
+                stem = re.match(r"(.+?)_(cal|val|all)$", src[1].stem).group(1) if re.match(r"(.+?)_(cal|val|all)$", src[1].stem) else src[1].stem
                 parts = []
                 for d in spec["observation_dirs"]:
                     parts += [pd.read_csv(f, header=None) for f in sorted(P(d).glob(f"{stem}_*.csv"))
-                              if re.fullmatch(rf"{re.escape(stem)}_(cal|val)", f.stem)]
+                              if re.fullmatch(rf"{re.escape(stem)}_(cal|val|all)", f.stem)]
+                if not parts:                                   # no period files: the referenced file itself
+                    parts = [pd.read_csv(src[1], header=None)]
                 df = pd.concat(parts).drop_duplicates(0).sort_values(0)
                 df = df[(df[0] >= t0) & (df[0] <= t1)]
                 z.writestr(root + arc, df.to_csv(index=False, header=False, float_format="%.6g"))
