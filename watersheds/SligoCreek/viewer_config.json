@@ -6,7 +6,7 @@
   {
    "label": "Model documentation",
    "tooltip": "Model structure, governing equations, data, calibration and validation (PDF)",
-   "url": "https://github.com/ArashMassoudieh/OpenWatershedTwin/blob/main/docs/SligoCreek/sligocreek_model_description.pdf"
+   "url": "https://openhydrotwin.com/SligoCreek/download/sligocreek_model_description.pdf"
   },
   {
    "label": "Download model",
