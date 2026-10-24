@@ -6,8 +6,8 @@
 QT += widgets network charts
 CONFIG += c++17
 TARGET = OWTViewer
-SOURCES += main.cpp DataSource.cpp MapView.cpp ChartPanel.cpp MainWindow.cpp
-HEADERS += DataSource.h MapView.h ChartPanel.h MainWindow.h
+SOURCES += main.cpp DataSource.cpp MapView.cpp ChartPanel.cpp MainWindow.cpp FloodAlertDialog.cpp
+HEADERS += DataSource.h MapView.h ChartPanel.h MainWindow.h FloodAlertDialog.h
 wasm {
     QMAKE_LFLAGS += -sINITIAL_MEMORY=134217728
     # our page shell (watershed splash) next to OWTViewer.js/.wasm; serve it as index.html instead of OWTViewer.html

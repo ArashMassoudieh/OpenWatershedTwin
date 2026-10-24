@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 
 #include "DataSource.h"
+#include "FloodAlertDialog.h"
 #include "MapView.h"
 
 #include <QAction>
@@ -10,6 +11,9 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMenu>
+#include <QMouseEvent>
+#include <QScreen>
+#include <QGuiApplication>
 #include <QDesktopServices>
 #include <QUrl>
 #include <QMessageBox>
@@ -26,6 +30,28 @@
 
 namespace
 {
+// the flood-alert banner: a coloured label that opens the alert popup on a click
+class ClickLabel : public QLabel
+{
+public:
+    explicit ClickLabel(const QString &text, std::function<void()> onClick) : QLabel(text), onClick_(std::move(onClick))
+    {
+        setCursor(Qt::PointingHandCursor);
+    }
+
+protected:
+    void mousePressEvent(QMouseEvent *e) override { pressed_ = e->button() == Qt::LeftButton; }
+    void mouseReleaseEvent(QMouseEvent *e) override
+    {
+        if (pressed_ && e->button() == Qt::LeftButton && rect().contains(e->position().toPoint()) && onClick_) onClick_();
+        pressed_ = false;
+    }
+
+private:
+    std::function<void()> onClick_;
+    bool pressed_ = false;
+};
+
 QString dateText(double serial)
 {
     return QDateTime::fromMSecsSinceEpoch(qint64((serial - 25569.0) * 86400000.0), QTimeZone::UTC)
@@ -68,6 +94,13 @@ void MainWindow::buildUi()
     auto *central = new QWidget;
     auto *v = new QVBoxLayout(central);
     v->setContentsMargins(0, 0, 0, 0);
+    // flood-alert banner (hidden while no alert is active): one button per site, opens the alert popup
+    alertBar_ = new QWidget;
+    alertLayout_ = new QHBoxLayout(alertBar_);
+    alertLayout_->setContentsMargins(6, 4, 6, 4);
+    alertLayout_->setSpacing(6);
+    alertBar_->hide();
+    v->addWidget(alertBar_);
     auto *split = new QSplitter(Qt::Horizontal);
     map_ = new MapView;
     charts_ = new ChartPanel;
@@ -104,6 +137,10 @@ void MainWindow::buildUi()
     refreshTimer_ = new QTimer(this);
     refreshTimer_->setInterval(15 * 60 * 1000);
     connect(refreshTimer_, &QTimer::timeout, this, &MainWindow::refresh);
+    alertTimer_ = new QTimer(this);
+    alertTimer_->setInterval(2 * 60 * 1000);
+    connect(alertTimer_, &QTimer::timeout, this, &MainWindow::pollAlerts);
+    connect(map_, &MapView::alertClicked, this, &MainWindow::openAlert);
 
     connect(map_, &MapView::unitContextMenu, this, [this](const QString &unit, const QPoint &pos) {
         // popup(), not exec(): a nested event loop blocks the single-threaded WebAssembly build
@@ -278,14 +315,8 @@ QJsonObject MainWindow::currentVariable() const
 
 void MainWindow::loadOutputs(std::function<void()> ready)
 {
-    data_->getJson(outputs_ + "status.json", [this](const QJsonDocument &d, const QString &) {
-        status_ = d.object();
-        QString s = tr("Forecast issued %1").arg(status_.value("issued_utc").toString());
-        if (status_.contains("rain_source")) s += "  |  " + tr("Rain: %1").arg(status_.value("rain_source").toString());
-        if (status_.value("stale").toBool()) s += "  |  " + tr("STALE: the last cycle failed");
-        statusText_ = s;
-        statusLabel_->setText(s);
-    });
+    data_->getJson(outputs_ + "status.json", [this](const QJsonDocument &d, const QString &) { applyStatus(d.object()); });
+    pollAlerts();
     data_->getJson(outputs_ + "map_state.json", [this, ready](const QJsonDocument &d, const QString &err) {
         if (!err.isEmpty()) { error(err); if (ready) ready(); return; }
         mapState_ = d.object();
@@ -450,4 +481,126 @@ void MainWindow::showGage(const QString &gage)
         charts_->show(QString("%1 (%2)").arg(o.value("name").toString(), gage), withPredictionSd(o, sd),
                       {"Q_model", "H_model"}, TimeMode::Both);
     });
+}
+
+// ------------------------------------------------------------------------------------------------ flood alerts
+void MainWindow::applyStatus(const QJsonObject &status)
+{
+    status_ = status;
+    QString s = tr("Forecast issued %1").arg(status_.value("issued_utc").toString());
+    if (status_.contains("rain_source")) s += "  |  " + tr("Rain: %1").arg(status_.value("rain_source").toString());
+    if (status_.value("stale").toBool()) s += "  |  " + tr("STALE: the last cycle failed");
+    statusText_ = s;
+    statusLabel_->setText(s);
+
+}
+
+void MainWindow::applyAlertList(const QJsonArray &list)
+{
+    // the sites whose alert state is not "none"; each has outputs/alerts/<site>.json
+    QStringList sites;
+    for (const QJsonValue &v : list)
+        if (!v.toString().isEmpty()) sites << v.toString();
+    for (const QString &k : alerts_.keys())
+        if (!sites.contains(k)) alerts_.remove(k);
+    if (sites.isEmpty())
+    {
+        alertTimer_->stop();
+        updateAlertBanner();
+        return;
+    }
+    if (!alertTimer_->isActive()) alertTimer_->start();
+    for (const QString &site : sites)
+        data_->getJson(outputs_ + "alerts/" + site + ".json", [this, site](const QJsonDocument &d, const QString &err) {
+            if (!err.isEmpty() || !d.isObject()) { statusLabel_->setText(tr("Flood alert %1: %2").arg(site, err)); return; }
+            QJsonObject a = d.object();
+            if (!a.contains("site")) a["site"] = site;
+            if (a.value("state").toString() == "none") alerts_.remove(site);
+            else alerts_[site] = a;
+            updateAlertBanner();
+            if (alertDialog_ && alertDialog_->site() == site) alertDialog_->setAlert(a);
+        });
+}
+
+void MainWindow::pollAlerts()
+{
+    // the alert list: outputs/alerts/index.json (written by the trigger, independent of the engine's cycle);
+    // fallback: "alerts" in outputs/status.json
+    data_->getJson(outputs_ + "alerts/index.json", [this](const QJsonDocument &d, const QString &err) {
+        if (err.isEmpty() && d.isObject()) { applyAlertList(d.object().value("alerts").toArray()); return; }
+        data_->getJson(outputs_ + "status.json", [this](const QJsonDocument &sd, const QString &serr) {
+            if (serr.isEmpty()) applyAlertList(sd.object().value("alerts").toArray());
+        });
+    });
+}
+
+void MainWindow::updateAlertBanner()
+{
+    while (QLayoutItem *it = alertLayout_->takeAt(0)) { if (it->widget()) it->widget()->deleteLater(); delete it; }
+    QVector<AlertMarker> markers;
+    for (auto it = alerts_.constBegin(); it != alerts_.constEnd(); ++it)
+    {
+        const QJsonObject a = it.value();
+        const QString site = it.key(), state = a.value("state").toString();
+        const QJsonObject vw = a.value("viewer").toObject();
+        const QString label = vw.value("label").toString(a.value("label").toString(site));
+        const QString stat = a.value("statistic").toString("p50");
+        const QJsonObject fc = a.value("forecast").toObject();
+        QString text = (state == "watch" ? tr("FLOOD WATCH") : tr("FLOOD ALERT")) + "   " + label + ": "
+                       + alertfmt::stateText(state);
+        if (fc.value("peak_cms").toObject().contains(stat))
+        {
+            text += tr("  |  forecast peak %1").arg(alertfmt::cfs(fc.value("peak_cms").toObject().value(stat).toDouble()));
+            const QDateTime tp = alertfmt::parseUtc(fc.value("peak_time_utc").toObject().value(stat).toString());
+            const QDateTime issued = alertfmt::parseUtc(a.value("issued_utc").toString());
+            if (tp.isValid())
+            {
+                text += tr(" at %1").arg(alertfmt::localTime(tp));
+                if (issued.isValid()) text += tr(" (lead %1 from the forecast issue)").arg(alertfmt::duration(issued.secsTo(tp)));
+            }
+        }
+        text += tr("  |  details...");
+        auto *b = new ClickLabel(text, [this, site]() { openAlert(site); });
+        const QColor c = alertfmt::stateColor(state);
+        b->setStyleSheet(QString("QLabel { background: %1; color: white; font-weight: bold; padding: 6px 12px;"
+                                 " border-radius: 3px; } QLabel:hover { background: %2; }").arg(c.name(), c.darker(115).name()));
+        b->setToolTip(tr("Open the flood alert: maps, impacts and the forecast band"));
+        b->setMinimumWidth(100);
+        b->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);   // long text must not widen the window
+        alertLayout_->addWidget(b, 1);
+        const QJsonArray bb = vw.value("bbox_lonlat").toArray();
+        if (bb.size() == 4)
+            markers << AlertMarker{site, label, (bb[0].toDouble() + bb[2].toDouble()) / 2,
+                                   (bb[1].toDouble() + bb[3].toDouble()) / 2, c};
+    }
+    alertBar_->setVisible(!alerts_.isEmpty());
+    map_->setAlertMarkers(markers);
+}
+
+void MainWindow::openAlert(const QString &site)
+{
+    if (!alerts_.contains(site)) return;
+    if (!alertDialog_)
+    {
+        alertDialog_ = new FloodAlertDialog(data_, outputs_, this);
+        // fit the screen (the browser window in the WebAssembly build), centred on the main window
+        const QRect avail = (screen() ? screen() : QGuiApplication::primaryScreen())->availableGeometry();
+        const QSize sz(std::min(1100, int(avail.width() * 0.96)), std::min(900, int(avail.height() * 0.94)));
+        alertDialog_->resize(sz);
+        QRect r(QPoint(0, 0), sz);
+        r.moveCenter(frameGeometry().center());
+        r.moveLeft(std::clamp(r.left(), avail.left(), std::max(avail.left(), avail.right() - sz.width())));
+        r.moveTop(std::clamp(r.top(), avail.top(), std::max(avail.top(), avail.bottom() - sz.height())));
+        alertDialog_->move(r.topLeft());
+    }
+    alertDialog_->setAlert(alerts_.value(site));
+    // show(), not exec(): non-modal, and a nested event loop blocks the single-threaded WebAssembly build
+    alertDialog_->show();
+    alertDialog_->raise();
+    alertDialog_->activateWindow();
+}
+
+FloodAlertDialog *MainWindow::alertDialog() const
+{
+    return alertDialog_.data();
 }

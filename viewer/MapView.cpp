@@ -298,6 +298,25 @@ QString MapView::unitAt(const QPointF &screen) const
     return QString();
 }
 
+void MapView::setAlertMarkers(const QVector<AlertMarker> &markers)
+{
+    alerts_ = markers;
+    update();
+}
+
+QPointF MapView::alertScreen(const AlertMarker &m) const
+{
+    return toScreen(QPointF((m.lon - lon0_) * kx_, (m.lat - lat0_) * ky_));
+}
+
+int MapView::alertAt(const QPointF &screen) const
+{
+    if (!originSet_) return -1;
+    for (int i = 0; i < alerts_.size(); ++i)
+        if (QLineF(alertScreen(alerts_[i]), screen).length() < 13) return i;
+    return -1;
+}
+
 QString MapView::gageAt(const QPointF &screen) const
 {
     for (const MapFeature &m : points_)
@@ -401,6 +420,26 @@ void MapView::paintMap(QPainter &p, const QSize &size)
             p.drawText(c + QPointF(9, 4), m.label);
         }
     }
+    // flood-alert sites: a warning disc with "!" and the site label
+    if (originSet_)
+        for (const AlertMarker &m : alerts_)
+        {
+            const QPointF c = t.map(QPointF((m.lon - lon0_) * kx_, (m.lat - lat0_) * ky_));
+            p.setBrush(QColor(m.color.red(), m.color.green(), m.color.blue(), 70));
+            p.setPen(Qt::NoPen);
+            p.drawEllipse(c, 20, 20);
+            p.setBrush(m.color);
+            p.setPen(QPen(Qt::white, 2));
+            p.drawEllipse(c, 11, 11);
+            QFont bf = p.font();
+            bf.setBold(true);
+            bf.setPointSizeF(10);
+            p.setFont(bf);
+            p.drawText(QRectF(c.x() - 11, c.y() - 11, 22, 22), Qt::AlignCenter, "!");
+            p.setPen(m.color.darker(130));
+            p.drawText(c + QPointF(22, 5), m.label);
+            p.setFont(f);
+        }
     paintLegend(p, size);
 }
 
@@ -505,6 +544,11 @@ void MapView::mouseMoveEvent(QMouseEvent *e)
         update();
         return;
     }
+    if (const int a = alertAt(e->position()); a >= 0)
+    {
+        QToolTip::showText(e->globalPosition().toPoint(), alerts_[a].label + tr(": flood alert (click for details)"), this);
+        return;
+    }
     const QString g = gageAt(e->position());
     const QString u = g.isEmpty() ? unitAt(e->position()) : QString();
     if (u != hover_)
@@ -539,6 +583,7 @@ void MapView::mouseReleaseEvent(QMouseEvent *e)
         unsetCursor();
         if ((e->position() - dragStart_).manhattanLength() < 4)
         {
+            if (const int a = alertAt(e->position()); a >= 0) { emit alertClicked(alerts_[a].id); return; }
             const QString u = unitAt(e->position());
             if (!u.isEmpty()) emit unitClicked(u);
         }

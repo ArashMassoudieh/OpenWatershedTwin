@@ -1,0 +1,117 @@
+{
+ "watershed": "SligoCreek",
+ "note": "Site registry of the forecast-triggered flood maps (docs/flood_service_design.md). Read by tools/shortrange_ensemble.py and tools/flood_trigger.py.",
+ "shortrange": {
+  "members_file": "deployments/live/ensemble_mcmc3.csv",
+  "interval_min": 15,
+  "horizon_h": 24,
+  "state_dir": "state/shortrange",
+  "out_dir": "outputs/shortrange",
+  "processes": 4,
+  "prefix": "SligoTwin_",
+  "n_units": 27,
+  "forcing": {
+   "note": "replay/demo sources on Home Linux; live: the twin's feeds (forcing/rain15, the hourly feed with its Open-Meteo tail as 'forecast')",
+   "rain": [
+    {
+     "dir": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/model/forcing_valWY2025",
+     "pattern": "precip_sc{n:02d}.csv",
+     "history_only": true,
+     "label": "AORC (history before MRMS)"
+    },
+    {
+     "dir": "/home/arash/Projects/OpenWatershedTwin/cache/mrms_history_SligoCreek",
+     "pattern": "rain_{unit}.csv",
+     "latency_min": 20,
+     "label": "MRMS MultiSensor hourly (Pass 1 timing), x1.165"
+    },
+    {
+     "dir": "/home/arash/Projects/OpenWatershedTwin/cache/mrms15_history_SligoCreek",
+     "pattern": "rain_{unit}.csv",
+     "latency_min": 5,
+     "scale": 1.0,
+     "label": "MRMS RadarOnly 15-min (primary)"
+    }
+   ],
+   "et": {
+    "dir": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/model/forcing_valWY2025",
+    "pattern": "et_sc{n:02d}.csv"
+   }
+  }
+ },
+ "sites": {
+  "sligo_maple": {
+   "label": "Sligo Creek at Maple Ave (USGS 01650800, NWS TKPM2)",
+   "trigger": {
+    "link": "Q_gauge_sim",
+    "threshold_cms": 50.43,
+    "statistic": "p50",
+    "label": "NWS TKPM2 minor flood stage 5.5 ft (1,781 cfs, USGS rating from 2025-07-19)"
+   },
+   "members": [
+    50,
+    90,
+    95
+   ],
+   "error_model": {
+    "gauge_link": "Q_gauge_sim",
+    "usgs_site": "01650800"
+   },
+   "links": {
+    "Q_inflow": [
+     "R11-R13:flow"
+    ],
+    "Q_sc13_local": [
+     "SC13-R13-perv:flow",
+     "SC13-R13-imp:flow",
+     "SC13-R13-gw:flow"
+    ],
+    "Q_r14": [
+     "R14-R15:flow"
+    ],
+    "Q_sc15_local": [
+     "SC15-R15-perv:flow",
+     "SC15-R15-imp:flow",
+     "SC15-R15-gw:flow"
+    ],
+    "Q_gauge_sim": [
+     "G15-R19:flow"
+    ],
+    "Q_r16": [
+     "R16-R19:flow"
+    ],
+    "Q_sc19_local": [
+     "SC19-R19-perv:flow",
+     "SC19-R19-imp:flow",
+     "SC19-R19-gw:flow"
+    ],
+    "Q_R19_out": [
+     "R19-R22:flow"
+    ]
+   },
+   "repeat": {
+    "min_change": 0.1,
+    "max_age_h": 1.0
+   },
+   "service": {
+    "url": "http://127.0.0.1:8300",
+    "site": "sligo_core1m",
+    "token_env": "FLOODMAP_TOKEN"
+   },
+   "library": {
+    "index": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/flood2d/library_1m/index.csv",
+    "rating": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/data/raw/usgs/ratings/USGS-01650800.exsa.rdb"
+   },
+   "demo_url": "http://openhydrotwin.com/SligoCreek-demo/",
+   "viewer": {
+    "label": "Maple Ave / Sligo Creek Parkway",
+    "bbox_lonlat": [
+     -77.012,
+     38.981,
+     -76.999,
+     38.999
+    ]
+   }
+  }
+ }
+}

@@ -127,3 +127,37 @@ Every property of a unit in the units layer is a placeholder in `source` (`{ds_s
   }
 }
 ```
+
+## Flood alerts (outputs/alerts/)
+
+Written by the flood trigger (`tools/flood_trigger.py`, docs/flood_service_design.md, "Alert file"); the viewer only
+reads them.
+
+```
+outputs/alerts/index.json            {"updated_utc": "...", "alerts": ["sligo_maple", ...]}: the sites whose state is not "none"
+outputs/alerts/<site>.json           one site's alert (contract in docs/flood_service_design.md, "Alert file")
+outputs/alerts/<site>/<issued>/...   its products (max-depth PNGs, animations)
+```
+
+- The alert list lives in `alerts/index.json` because the engine rewrites `status.json` every cycle. If
+  `index.json` is missing, the viewer falls back to `"alerts"` in `status.json`.
+- The viewer reads the list at load and with the 15-min refresh; while any alert is active it polls `index.json` and
+  every listed `<site>.json` every 2 min, and refreshes the open popup when the file changes. With no active alert
+  nothing changes in the viewer.
+- Banner: one coloured bar per active site above the map (`watch` amber; `triggered`, `mapping`, `mapped` red) with
+  the site label, state, the forecast peak of the trigger statistic and its time (America/New_York, EDT/EST) and
+  the lead time from the issue time. Clicking it, or the marker drawn at the centre of `viewer.bbox_lonlat`
+  (optional in the alert file: `"viewer": {"label", "bbox_lonlat": [lon0, lat0, lon1, lat1]}`, as in the site
+  registry), opens the popup.
+- Popup (`FloodAlertDialog`): header (label, issue time, `statistic`, `threshold_cms`, optional `trigger_label`, the
+  members' peaks and lead times, `job` state, `progress` and `message`); one tab per entry of `maps` (`p50`, `p90`,
+  `p95`, ...: the PNG, `source` `library` = pre-built library map or `2d` = 2D simulation, `stage_ft`, `impacts`);
+  the forecast band `forecast.band` (`t_utc`, `q5`, `q25`, `q50`, `q75`, `q95` in m3/s); buttons for `demo_url`,
+  top-level `"animations": [{"label", "url"}]` and per-member `"animation": "<path>"`.
+- Paths in the alert file (`png`, animations) are relative to the outputs folder (e.g.
+  `alerts/sligo_maple/20250719T2135Z/p50_max_depth.png`); absolute http(s) URLs are used as they are.
+- `impacts`: numbers with `_ft`, `_m` or `_mi` are lengths (shown in ft, with miles above a quarter mile),
+  `_acres` / `_ha` areas (shown in acres), lists (e.g. `cross_streets`: names, or objects with `name`,
+  `length_ft`/`length_m`, `max_depth_ft`) one row per item, other numbers are counts (`parking_lots`,
+  `parks_playgrounds`, `buildings`).
+- Display units: flows in cfs (m3/s x 35.3147), stages and lengths in ft.

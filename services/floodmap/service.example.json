@@ -1,0 +1,12 @@
+{
+  "host": "127.0.0.1",
+  "port": 8300,
+  "jobs_dir": "jobs",
+  "sites_dir": "sites",
+  "workdir": ".",
+  "runner": ["python3", "pipeline/run_job.py"],
+  "max_concurrent": 1,
+  "token": "",
+  "requeue_on_start": false,
+  "kill_grace_s": 10
+}

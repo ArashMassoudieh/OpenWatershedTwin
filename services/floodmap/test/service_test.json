@@ -1,0 +1,12 @@
+{
+  "host": "127.0.0.1",
+  "port": 8399,
+  "jobs_dir": "jobs",
+  "sites_dir": "sites",
+  "workdir": "..",
+  "runner": ["python3", "pipeline/dummy_runner.py"],
+  "max_concurrent": 1,
+  "token": "test-token",
+  "requeue_on_start": false,
+  "kill_grace_s": 10
+}
