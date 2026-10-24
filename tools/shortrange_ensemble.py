@@ -35,7 +35,7 @@ import pandas as pd
 
 EPOCH = pd.Timestamp("1899-12-30", tz="UTC")
 ser = lambda t: (pd.Timestamp(t) - EPOCH).total_seconds() / 86400.0
-from_ser = lambda d: EPOCH + pd.to_timedelta(d, unit="D")
+from_ser = lambda d: (EPOCH + pd.to_timedelta(d, unit="D")).round("s")
 DT_OUT = 1 / 96                      # 15-min output grid (days)
 HISTORY_D = 0.5                      # link history kept per member (days) and written with each forecast
 
@@ -91,12 +91,15 @@ def rain_rows(sr, unit: str, n: int, T: float, t_from: float, t_to: float):
         f = f[f[:, 0] >= t_obs - 1e-6]
         rows = np.vstack([rows, f]) if len(f) else rows
     rows = rows[(rows[:, 1] > t_from - 1) & (rows[:, 0] < t_to + 1)]
-    # fill gaps (and the end) with zero-rain bins, so the kernel never interpolates across a gap
-    out, t = [], (rows[0, 0] if len(rows) else t_from - 1)
-    for r in rows:
-        if r[0] > t + 1e-6:
-            out.append((t, r[0], 0.0))
-        out.append(tuple(r)); t = max(t, r[1])
+    # Gaps are left to the kernel: it samples each bin's rate at its midpoint, interpolates linearly, and inserts a
+    # zero half a bin outside any gap (as OHQ's CPrecipitation, so as in calibration). It holds the last sample flat,
+    # so the end gets one zero bin as wide as the last bin (the same ramp as at a gap) and zero to the horizon. Never
+    # pad with one long zero bin next to a wet bin: the interpolation would spread that bin's rate over all of it.
+    out = [tuple(r) for r in rows]
+    t = rows[-1, 1] if len(rows) else t_from - 1
+    if len(rows):
+        w = rows[-1, 1] - rows[-1, 0]
+        out.append((t, t + w, 0.0)); t += w
     if t < t_to + 1:
         out.append((t, t_to + 1, 0.0))
     return np.array(out), t_obs
@@ -167,7 +170,9 @@ def _member_run(job):
     idx = [[names.index(n) for n in v] for v in links.values()]
     buf = (C.c_double * len(names))()
     rows, saved, ok = [], None, True
-    grid = np.arange(t0, t_end + 1e-9, DT_OUT)
+    # the 15-min grid plus the issue time and the end exactly (float arange can stop a hair short of them)
+    grid = np.unique(np.concatenate([np.arange(t0, t_end - 1e-6, DT_OUT), [t_obs, t_end]]))
+    grid = grid[grid >= t0 - 1e-9]
     for tk in grid:
         if ok and tk > t0:
             f("run_to")(h, tk)
@@ -175,7 +180,7 @@ def _member_run(job):
         if ok:
             f("outputs")(h, buf)
         rows.append([sum(buf[i] for i in ix) / 86400.0 if ok else np.nan for ix in idx])
-        if saved is None and tk >= t_obs - 1e-9:
+        if ok and saved is None and tk >= t_obs - 1e-6:
             s = np.zeros(len(_K["snames"]))
             f("export_state")(h, s.ctypes.data_as(C.POINTER(C.c_double)), None, None, None)
             saved = s.copy()
@@ -201,6 +206,9 @@ def cmd_init(wdir, at, spinup_years):
     t_start = time.time()
     with Pool(sr.get("processes", 4), initializer=_init, initargs=(lib, sr.get("prefix", "SligoTwin_"))) as pool:
         for k, grid, rows, state, ok in pool.imap_unordered(_spinup, jobs):
+            if state is None:
+                print(f"member {k}: spin-up failed (no state); left out", flush=True)
+                continue
             np.savez_compressed(sd / f"member_{k:03d}.npz", t=T, state=state, ok=ok, hist_t=grid[-1:], hist=rows[-1:])
     print(f"init: {len(mem)} members spun up from {from_ser(t0):%Y-%m-%d} to {from_ser(T):%Y-%m-%d %H:%M} UTC in {time.time() - t_start:.0f} s")
 
@@ -216,7 +224,7 @@ def cmd_cycle(wdir, now):
     units = [f"SC{n:02d}" for n in range(1, sr.get("n_units", 27) + 1)]
     t_end = T + sr.get("horizon_h", 24) / 24
     rain, et, t_obs = forcing_bundle(sr, units, T, t_prev, t_end)
-    t_obs = np.floor(t_obs * 96 + 1e-6) / 96
+    t_obs = np.floor(t_obs * 96 + 1e-3) / 96          # files keep 7 decimals (~0.01 s): tolerate 0.1 s
     if t_obs <= t_prev + 1e-9:
         print(f"cycle {from_ser(T):%Y-%m-%d %H:%M}Z: no new observed rain since {from_ser(t_prev):%H:%M}; nothing to do")
         return

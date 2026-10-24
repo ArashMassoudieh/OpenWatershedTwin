@@ -55,7 +55,12 @@
    ],
    "error_model": {
     "gauge_link": "Q_gauge_sim",
-    "usgs_site": "01650800"
+    "usgs_site": "01650800",
+    "obs": {
+     "file": "/home/arash/Projects/OpenWatershedTwin/watersheds/SligoCreek/deployments/live/observations/01650800_flow.csv",
+     "format": "ohq",
+     "note": "usgs_feed.py hourly means (m3/s); replays: the USGS IV csv with format usgs_csv"
+    }
    },
    "links": {
     "Q_inflow": [
