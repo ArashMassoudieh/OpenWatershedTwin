@@ -63,6 +63,12 @@ Decided 2026-10-24 as well:
   `service.url` changes.
 - Build and test everything locally first. Deploy to the shared AWS host only with the user's go-ahead.
 - The defaults above are accepted.
+- Structural error at every link (user, 2026-10-25): the station's s_Q and tau_Q and one shared AR(1) series per
+  member, applied to all links (no area scaling, no ungauged penalty). Basis: OHQ Watershed Models
+  tools/error_scaling (s ~ A^-0.10, tau 3-5 h at 1-13 mi2; independent per-link errors would cancel in the sum and
+  make the total flow less uncertain than the gauge says). Limitation for the paper: a site whose flooding comes
+  from a small uncalibrated tributary would need a larger, partly independent error (Turkey Branch in the Rock
+  Creek model: s 1.09 vs 0.54 calibrated).
 - The 15-min ensemble is a Python tool (`tools/shortrange_ensemble.py`) on the kernel's state export/import
   (`ohq_kernel_export_state` / `import_state`). It keeps member states in `state/shortrange/`, apart from the engine's
   6-hourly ensemble, so the engine needs no C++ change.
