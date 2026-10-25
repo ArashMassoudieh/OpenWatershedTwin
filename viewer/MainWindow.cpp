@@ -375,6 +375,32 @@ void MainWindow::withUnitDoc(const QString &unit, std::function<void(const QJson
     });
 }
 
+namespace {
+// viewer_config options of a variable, copied into its series for the chart: "prediction_sd_log" (log-space sd of a
+// multiplicative, log-normal error -> "pred_sd", the 95 % prediction interval) and "chart_log" (log value axis)
+struct SeriesOptions { double sd = 0; bool logAxis = false; };
+SeriesOptions optionsOf(const QJsonObject &v)
+{
+    return {v.value("prediction_sd_log").toDouble(), v.value("chart_log").toBool()};
+}
+QJsonObject withPredictionSd(const QJsonObject &doc, const QHash<QString, SeriesOptions> &opt)
+{
+    if (opt.isEmpty()) return doc;
+    QJsonObject series = doc.value("series").toObject();
+    for (auto it = opt.constBegin(); it != opt.constEnd(); ++it)
+    {
+        if (!series.contains(it.key())) continue;
+        QJsonObject o = series.value(it.key()).toObject();
+        if (it.value().sd > 0) o["pred_sd"] = it.value().sd;
+        if (it.value().logAxis) o["chart_log"] = true;
+        series[it.key()] = o;
+    }
+    QJsonObject d = doc;
+    d["series"] = series;
+    return d;
+}
+} // namespace
+
 void MainWindow::showUnit(const QString &unit, TimeMode mode, ChartScope scope)
 {
     selectedUnit_ = unit;
@@ -396,7 +422,15 @@ void MainWindow::showUnit(const QString &unit, TimeMode mode, ChartScope scope)
                                                             : elabel;
         const QString when = mode == TimeMode::History ? tr("history") : mode == TimeMode::Forecast ? tr("forecast")
                                                                                                     : tr("history and forecast");
-        charts_->show(QString("%1: %2, %3").arg(unit, what, when), doc, keys, mode);
+        QHash<QString, SeriesOptions> sd;
+        for (const QJsonValue &ev : elements_)
+            for (const QJsonValue &vv : ev.toObject().value("variables").toArray())
+            {
+                const SeriesOptions o = optionsOf(vv.toObject());
+                if (o.sd > 0 || o.logAxis)
+                    sd[ev.toObject().value("id").toString() + ":" + vv.toObject().value("id").toString()] = o;
+            }
+        charts_->show(QString("%1: %2, %3").arg(unit, what, when), withPredictionSd(doc, sd), keys, mode);
     });
 }
 
@@ -405,7 +439,15 @@ void MainWindow::showGage(const QString &gage)
     data_->getJson(outputs_ + "gages/" + gage + ".json", [this, gage](const QJsonDocument &d, const QString &err) {
         if (!err.isEmpty()) { charts_->clear(tr("No model output at gage %1.").arg(gage)); return; }
         const QJsonObject o = d.object();
-        charts_->show(QString("%1 (%2)").arg(o.value("name").toString(), gage), o, {"Q_model", "H_model"},
-                      TimeMode::Both);
+        QHash<QString, SeriesOptions> sd;
+        for (const QJsonValue &gv : config_.value("gages").toArray())
+            if (gv.toObject().value("id").toString() == gage)
+                for (const QJsonValue &sv : gv.toObject().value("series").toArray())
+                {
+                    const SeriesOptions op = optionsOf(sv.toObject());
+                    if (op.sd > 0 || op.logAxis) sd[sv.toObject().value("id").toString() + "_model"] = op;
+                }
+        charts_->show(QString("%1 (%2)").arg(o.value("name").toString(), gage), withPredictionSd(o, sd),
+                      {"Q_model", "H_model"}, TimeMode::Both);
     });
 }
