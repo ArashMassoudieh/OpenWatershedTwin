@@ -36,7 +36,18 @@
    "et": {
     "dir": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/model/forcing_valWY2025",
     "pattern": "et_sc{n:02d}.csv"
+   },
+   "forecast": {
+    "dir": "/home/arash/Projects/OpenWatershedTwin/cache/qpf_hrrr_SligoCreek/{issue}",
+    "pattern": "rain_{unit}.csv",
+    "lagged": 6,
+    "label": "HRRR time-lagged ensemble: the 6 newest runs published by the cycle time (tools/qpf_hrrr.py fetch --issue T); member k uses run k mod 6"
    }
+  },
+  "qpf": {
+   "cache_dir": "../../cache/qpf_hrrr_SligoCreek",
+   "scale": 1.0,
+   "lagged_runs": 6
   }
  },
  "sites": {
@@ -46,7 +57,11 @@
     "link": "Q_gauge_sim",
     "threshold_cms": 50.43,
     "statistic": "p50",
-    "label": "NWS TKPM2 minor flood stage 5.5 ft (1,781 cfs, USGS rating from 2025-07-19)"
+    "label": "NWS TKPM2 minor flood stage 5.5 ft (1,781 cfs, USGS rating from 2025-07-19)",
+    "map_on": [
+     "watch",
+     "triggered"
+    ]
    },
    "members": [
     50,

@@ -69,6 +69,14 @@ Decided 2026-10-24 as well:
   make the total flow less uncertain than the gauge says). Limitation for the paper: a site whose flooding comes
   from a small uncalibrated tributary would need a larger, partly independent error (Turkey Branch in the Rock
   Creek model: s 1.09 vs 0.54 calibrated).
+- Forecast rain (user, 2026-10-25: "it should use the forecast"): each 15-min cycle runs on observed radar to the
+  issue time, then HRRR forecast rain as a time-lagged ensemble: the 6 newest HRRR runs published by the cycle
+  time (15-min fields to 18 h, then the newest synoptic run's hourly rain), member k using run k mod 6
+  (`tools/qpf_hrrr.py`). The 2D job starts at a watch (the 95th-percentile member's peak reaches the threshold) as
+  well as at a warning, and maps only the members whose peak reaches it (`trigger.map_on`). Replay of 19 Jul 2025
+  (200 members): watch from the 08:00 EDT cycle, held 5 h; warning 17:30 (data to 17:15); flood stage 17:25,
+  peak 18:10. A watch-time 2D job is done hours before the flood; the morning forecast under-sized the event
+  (95th-percentile peak ~2,400-2,600 vs 3,870 cfs observed).
 - The 15-min ensemble is a Python tool (`tools/shortrange_ensemble.py`) on the kernel's state export/import
   (`ohq_kernel_export_state` / `import_state`). It keeps member states in `state/shortrange/`, apart from the engine's
   6-hourly ensemble, so the engine needs no C++ change.

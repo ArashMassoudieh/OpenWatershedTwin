@@ -10,7 +10,9 @@ For every site of the registry (watersheds/<W>/sites.json "sites"):
      at those percentiles of the peak (never the pointwise envelope); the statistic (trigger.statistic, default p50)
      is that percentile of the peaks;
   4. state: "triggered" when the statistic reaches the threshold, "watch" when the highest mapped member does,
-     else "none"; "mapping" / "mapped" while / after the flood service works on a job;
+     else "none"; "mapping" / "mapped" while / after the flood service works on a job. trigger.map_on lists the
+     states that start a 2D job (default ["triggered"]; ["watch", "triggered"] maps a watch hours ahead, so the
+     maps are ready before a flash flood: at ~3 instance-hours a job, false alarms are cheap);
   5. maps at once from the pre-built library (the first level at or above each member's peak stage, the site's USGS
      rating), and, when triggered, a job to the flood service (POST /jobs) with the members' link flows; a new job
      only if a member's peak changed by more than repeat.min_change or the last job is older than repeat.max_age_h;
@@ -199,14 +201,20 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args):
     job = memo.get("job")
     rep = site.get("repeat", {})
     stamp = issued.strftime("%Y%m%dT%H%MZ")
-    if state == "triggered" and not args.no_submit:
+    map_on = trig.get("map_on", ["triggered"])          # states that start a 2D job (e.g. ["watch", "triggered"])
+    if state in map_on and args.no_submit:
+        print(f"{name} {stamp}: {state}: a 2D job would be submitted now for "
+              + ", ".join(m for m in pick if peak_cms[m] >= thr) + " (--no-submit)", flush=True)
+    if state in map_on and not args.no_submit:
         age_h = (issued - pd.Timestamp(job["issued_utc"])).total_seconds() / 3600 if job else 1e9
         changed = (not job) or job.get("state") == "failed" or any(
             abs(peak_cms[m] / max(job["peaks_cms"].get(m, 1e-6), 1e-6) - 1) > rep.get("min_change", 0.1) for m in peak_cms)
         if changed or age_h > rep.get("max_age_h", 1.0):
+            # map only members whose forecast peak reaches the threshold (at a watch the median is often far below it)
+            send = {m: k for m, k in pick.items() if peak_cms[m] >= thr}
             body = dict(site=site["service"]["site"], issued_utc=issued.isoformat(), requester=f"flood_trigger {name}",
-                        members={m: dict(t_utc=times_iso, links={ln: [round(float(v), 5) for v in Qe[pick[m], :, j]]
-                                                                  for j, ln in enumerate(links)}) for m in pick})
+                        members={m: dict(t_utc=times_iso, links={ln: [round(float(v), 5) for v in Qe[k, :, j]]
+                                                                  for j, ln in enumerate(links)}) for m, k in send.items()})
             r = call(site, "POST", "/jobs", body)
             job = dict(id=r["job_id"], issued_utc=issued.isoformat(), peaks_cms=peak_cms, state="queued", progress=0.0)
             print(f"{name}: job {job['id']} submitted", flush=True)
@@ -222,7 +230,7 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args):
         age_h = (issued - pd.Timestamp(job["issued_utc"])).total_seconds() / 3600
         if age_h <= 3 * rep.get("max_age_h", 1.0):
             maps.update(job["maps"])
-    if state == "triggered" and job:
+    if state in map_on and job:
         state = "mapped" if job.get("state") == "collected" else ("mapping" if job.get("state") != "failed" else state)
     memo["job"] = job
     mpath.write_text(json.dumps(memo, indent=1, default=str))

@@ -63,7 +63,7 @@ def read_rows(path: Path, scale=1.0):
     return a
 
 
-def rain_rows(sr, unit: str, n: int, T: float, t_from: float, t_to: float):
+def rain_rows(sr, unit: str, n: int, T: float, t_from: float, t_to: float, lag: int = 0):
     """(rows [start, end, depth_m] covering [t_from, t_to] without gaps, T_obs) for one unit at cycle time T."""
     srcs = sr["forcing"]["rain"]
     layers = []
@@ -87,7 +87,11 @@ def rain_rows(sr, unit: str, n: int, T: float, t_from: float, t_to: float):
     rows = rows[rows[:, 1] <= t_obs + 1e-6]
     fc = sr["forcing"].get("forecast")
     if fc:
-        f = read_rows(Path(fc["dir"]) / fc["pattern"].format(unit=unit, n=n), fc.get("scale", 1.0))
+        # "{issue}" in the folder: the forecast fetched for this cycle time (tools/qpf_hrrr.py fetch --issue T)
+        fdir = Path(fc["dir"].format(issue=from_ser(T).strftime("%Y%m%dT%H%MZ")))
+        if fc.get("lagged", 1) > 1 and (fdir / f"run{lag}").is_dir():    # time-lagged ensemble: this member's run
+            fdir = fdir / f"run{lag}"
+        f = read_rows(fdir / fc["pattern"].format(unit=unit, n=n), fc.get("scale", 1.0))
         f = f[f[:, 0] >= t_obs - 1e-6]
         rows = np.vstack([rows, f]) if len(f) else rows
     rows = rows[(rows[:, 1] > t_from - 1) & (rows[:, 0] < t_to + 1)]
@@ -111,10 +115,10 @@ def et_rows(sr, unit, n, t_from, t_to):
     return a[(a[:, 0] > t_from - 2) & (a[:, 0] < t_to + 2)]
 
 
-def forcing_bundle(sr, units, T, t_from, t_to):
+def forcing_bundle(sr, units, T, t_from, t_to, lag=0):
     rain, tobs = {}, []
     for k, u in enumerate(units, start=1):
-        rain[u], to = rain_rows(sr, u, k, T, t_from, t_to)
+        rain[u], to = rain_rows(sr, u, k, T, t_from, t_to, lag)
         tobs.append(to)
     et = {u: et_rows(sr, u, k, t_from, t_to) for k, u in enumerate(units, start=1)}
     return rain, et, min(tobs)
@@ -224,13 +228,16 @@ def cmd_cycle(wdir, now):
     units = [f"SC{n:02d}" for n in range(1, sr.get("n_units", 27) + 1)]
     t_end = T + sr.get("horizon_h", 24) / 24
     rain, et, t_obs = forcing_bundle(sr, units, T, t_prev, t_end)
-    t_obs = np.floor(t_obs * 96 + 1e-3) / 96          # files keep 7 decimals (~0.01 s): tolerate 0.1 s
+    t_obs = np.floor(t_obs * 96 + 1e-3) / 96
+    # time-lagged forecast rain: member k takes lagged run k mod n (sites.json forcing.forecast.lagged)
+    n_lag = int((sr["forcing"].get("forecast") or {}).get("lagged", 1))
+    rains = [rain] + [forcing_bundle(sr, units, T, t_prev, t_end, lag=j)[0] for j in range(1, n_lag)]          # files keep 7 decimals (~0.01 s): tolerate 0.1 s
     if t_obs <= t_prev + 1e-9:
         print(f"cycle {from_ser(T):%Y-%m-%d %H:%M}Z: no new observed rain since {from_ser(t_prev):%H:%M}; nothing to do")
         return
     pcols = [c for c in mem.columns if c.startswith("p_")]
     jobs = [(k, {c: float(mem.at[k, c]) for c in pcols}, float(st[k]["t"]), st[k]["state"], t_obs, t_obs + sr.get("horizon_h", 24) / 24,
-             rain, et, links, cfg["dt0"]) for k in sorted(st)]
+             rains[k % n_lag], et, links, cfg["dt0"]) for k in sorted(st)]
     t_start = time.time()
     res = {}
     with Pool(sr.get("processes", 4), initializer=_init, initargs=(lib, sr.get("prefix", "SligoTwin_"))) as pool:
