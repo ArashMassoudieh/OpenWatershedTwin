@@ -120,7 +120,8 @@
    },
    "library": {
     "index": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/flood2d/library_1m/index.csv",
-    "rating": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/data/raw/usgs/ratings/USGS-01650800.exsa.rdb"
+    "rating": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/data/raw/usgs/ratings/USGS-01650800.exsa.rdb",
+    "dem": "/home/arash/Dropbox/OHQ Watershed Models/Sligo Creek/flood2d/data/dem_1m.tif"
    },
    "demo_url": "http://openhydrotwin.com/SligoCreek-demo/",
    "viewer": {
