@@ -268,8 +268,11 @@ QList<QPair<QString, QString>> impactRows(const QJsonObject &imp)
             for (int i = 0; i < a.size(); ++i) lists << qMakePair(i == 0 ? name : QString(), itemText(a[i]));
         }
         else if (v.isObject())
-            for (auto jt = v.toObject().constBegin(); jt != v.toObject().constEnd(); ++jt)
+        {
+            const QJsonObject o = v.toObject();   // one copy: begin/end of two temporaries would not match
+            for (auto jt = o.constBegin(); jt != o.constEnd(); ++jt)
                 lists << qMakePair(prettyKey(k) + ": " + jt.key(), itemText(jt.value()));
+        }
         else if (v.isDouble())
         {
             const double x = v.toDouble();
