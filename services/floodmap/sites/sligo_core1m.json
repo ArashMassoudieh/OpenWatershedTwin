@@ -8,11 +8,36 @@
  "sources": "sources_core1m.json",
  "thalweg": "thalweg_core1m.csv",
  "dwe_binary": "/media/arash/SDD-WD/2D-DWE-rockcreek/bin/2D-DWE",
- "threads": 12,
+ "threads": 8,
  "t_out_s": 600,
  "crs": "EPSG:26918",
- "hotstart": {"dir": "hotstart/core1m", "index": "index.json"},
- "window": {"trigger_link": "Q_gauge_sim", "threshold_cms": 50.43, "low_frac": 0.3, "lead_h": 2.0, "tail_h": 3.0, "max_h": 12.0},
- "gauges": {"USGS_01650800": {"sources_key": "01650800", "datum_ft": 161.37, "upstream_m": 10.0, "inbank_stage_ft": 4.0}},
- "impacts": {"features": "osm/osm_features.gpkg", "wet_depth_m": 0.15, "linear": ["Sligo Creek Parkway", "Sligo Creek Trail"], "cross_streets": true}
+ "hotstart": {
+  "dir": "hotstart/core1m",
+  "index": "index.json"
+ },
+ "window": {
+  "trigger_link": "Q_gauge_sim",
+  "threshold_cms": 50.43,
+  "low_frac": 0.3,
+  "lead_h": 2.0,
+  "tail_h": 3.0,
+  "max_h": 12.0
+ },
+ "gauges": {
+  "USGS_01650800": {
+   "sources_key": "01650800",
+   "datum_ft": 161.37,
+   "upstream_m": 10.0,
+   "inbank_stage_ft": 4.0
+  }
+ },
+ "impacts": {
+  "features": "osm/osm_features.gpkg",
+  "wet_depth_m": 0.15,
+  "linear": [
+   "Sligo Creek Parkway",
+   "Sligo Creek Trail"
+  ],
+  "cross_streets": true
+ }
 }

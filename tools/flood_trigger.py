@@ -189,6 +189,9 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args):
     stat = float(np.percentile(peaks[good], float(stat_name[1:])))
     top = max(float(peaks[k]) for k in pick.values())
     issued = from_ser(t_obs)
+    # times where every good member has flows (a fresh spin-up has no history before its start): JSON has no NaN
+    have = np.isfinite(Qe[good]).all(axis=(0, 2))
+    t, Qe, g, fut = t[have], Qe[:, have], g[:, have], fut[have]
     times_iso = [from_ser(x).strftime("%Y-%m-%dT%H:%M:%SZ") for x in t]
     state = "triggered" if stat >= thr else ("watch" if top >= thr else "none")
     band = {f"q{p}": [round(float(v), 3) for v in np.nanpercentile(g[good], p, axis=0)] for p in BAND}
