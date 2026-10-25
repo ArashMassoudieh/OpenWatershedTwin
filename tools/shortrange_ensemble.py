@@ -217,6 +217,26 @@ def cmd_init(wdir, at, spinup_years):
     print(f"init: {len(mem)} members spun up from {from_ser(t0):%Y-%m-%d} to {from_ser(T):%Y-%m-%d %H:%M} UTC in {time.time() - t_start:.0f} s")
 
 
+def lag_assignment(sr, T, keys, n_lag):
+    """{member: lagged run index}. Shares fall with the run's age, w = exp(-age / lag_weight_tau_h) (forecast config;
+    without it, equal shares), so an old run that mistimed a storm keeps few members. Members are assigned in blocks
+    in member order (the members are random posterior draws, so a block is a random subset)."""
+    fc = sr["forcing"].get("forecast") or {}
+    if n_lag <= 1:
+        return {k: 0 for k in keys}
+    tau = fc.get("lag_weight_tau_h")
+    ages = list(range(n_lag))
+    meta = Path(fc["dir"].format(issue=from_ser(T).strftime("%Y%m%dT%H%MZ"))) / "meta.json"
+    if meta.exists():
+        runs = json.loads(meta.read_text()).get("runs", [])
+        if len(runs) == n_lag:
+            ages = [(from_ser(T) - pd.Timestamp(r["subhourly_run"])).total_seconds() / 3600 for r in runs]
+    w = np.ones(n_lag) if not tau else np.exp(-(np.array(ages) - min(ages)) / float(tau))
+    cw = np.cumsum(w / w.sum())
+    n = len(keys)
+    return {k: int(min(np.searchsorted(cw, (i + 0.5) / n), n_lag - 1)) for i, k in enumerate(keys)}
+
+
 def cmd_cycle(wdir, now):
     reg, sr, cfg, lib, links, mem = load(wdir)
     T = ser(pd.Timestamp(now) if now else pd.Timestamp.now(tz="UTC"))
@@ -231,13 +251,14 @@ def cmd_cycle(wdir, now):
     t_obs = np.floor(t_obs * 96 + 1e-3) / 96
     # time-lagged forecast rain: member k takes lagged run k mod n (sites.json forcing.forecast.lagged)
     n_lag = int((sr["forcing"].get("forecast") or {}).get("lagged", 1))
-    rains = [rain] + [forcing_bundle(sr, units, T, t_prev, t_end, lag=j)[0] for j in range(1, n_lag)]          # files keep 7 decimals (~0.01 s): tolerate 0.1 s
+    rains = [rain] + [forcing_bundle(sr, units, T, t_prev, t_end, lag=j)[0] for j in range(1, n_lag)]
+    lag_of = lag_assignment(sr, T, sorted(st), n_lag)
     if t_obs <= t_prev + 1e-9:
         print(f"cycle {from_ser(T):%Y-%m-%d %H:%M}Z: no new observed rain since {from_ser(t_prev):%H:%M}; nothing to do")
         return
     pcols = [c for c in mem.columns if c.startswith("p_")]
     jobs = [(k, {c: float(mem.at[k, c]) for c in pcols}, float(st[k]["t"]), st[k]["state"], t_obs, t_obs + sr.get("horizon_h", 24) / 24,
-             rains[k % n_lag], et, links, cfg["dt0"]) for k in sorted(st)]
+             rains[lag_of[k]], et, links, cfg["dt0"]) for k in sorted(st)]
     t_start = time.time()
     res = {}
     with Pool(sr.get("processes", 4), initializer=_init, initargs=(lib, sr.get("prefix", "SligoTwin_"))) as pool:
@@ -263,7 +284,7 @@ def cmd_cycle(wdir, now):
     stamp = from_ser(t_obs).strftime("%Y%m%dT%H%MZ")
     out = od / stamp; out.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out / "members.npz", t=times, Q=Q, links=np.array(list(links)), members=np.array(sorted(st)),
-                        t_obs=t_obs, cycle=T)
+                        t_obs=t_obs, cycle=T, lag_run=np.array([lag_of[k] for k in sorted(st)]))
     meta = dict(cycle_utc=from_ser(T).isoformat(), t_obs_utc=from_ser(t_obs).isoformat(), dir=str(out.relative_to(wdir)),
                 members=len(st), failed=int(sum(not r[3] for r in res.values())), seconds=round(time.time() - t_start, 1))
     (od / "latest.json").write_text(json.dumps(meta, indent=1))

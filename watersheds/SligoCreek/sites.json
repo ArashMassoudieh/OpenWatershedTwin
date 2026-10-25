@@ -41,7 +41,8 @@
     "dir": "/home/arash/Projects/OpenWatershedTwin/cache/qpf_hrrr_SligoCreek/{issue}",
     "pattern": "rain_{unit}.csv",
     "lagged": 6,
-    "label": "HRRR time-lagged ensemble: the 6 newest runs published by the cycle time (tools/qpf_hrrr.py fetch --issue T); member k uses run k mod 6"
+    "label": "HRRR time-lagged ensemble: the 6 newest runs published by the cycle time (tools/qpf_hrrr.py fetch --issue T); member k uses run k mod 6",
+    "lag_weight_tau_h": 2.0
    }
   },
   "qpf": {
@@ -61,7 +62,9 @@
     "map_on": [
      "watch",
      "triggered"
-    ]
+    ],
+    "watch_on_latest": true,
+    "watch_hold_h": 6
    },
    "members": [
     50,

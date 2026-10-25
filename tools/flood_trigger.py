@@ -10,7 +10,9 @@ For every site of the registry (watersheds/<W>/sites.json "sites"):
      at those percentiles of the peak (never the pointwise envelope); the statistic (trigger.statistic, default p50)
      is that percentile of the peaks;
   4. state: "triggered" when the statistic reaches the threshold, "watch" when the highest mapped member does,
-     else "none"; "mapping" / "mapped" while / after the flood service works on a job. trigger.map_on lists the
+     else "none"; also "watch" when the members on the newest forecast run alone reach it (trigger.watch_on_latest),
+     held for trigger.watch_hold_h after the last cycle that met it (a held watch starts no job); "mapping" /
+     "mapped" while / after the flood service works on a job. trigger.map_on lists the
      states that start a 2D job (default ["triggered"]; ["watch", "triggered"] maps a watch hours ahead, so the
      maps are ready before a flash flood: at ~3 instance-hours a job, false alarms are cheap);
   5. maps at once from the pre-built library (the first level at or above each member's peak stage, the site's USGS
@@ -171,7 +173,7 @@ def render_library(reg, wdir, web, sites_dir):
 
 
 # ---------------------------------------------------------------------------------------------- main
-def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args):
+def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args, lag_run=None):
     site["_name"] = name
     trig = site["trigger"]
     thr = float(trig["threshold_cms"])
@@ -193,22 +195,45 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args):
     have = np.isfinite(Qe[good]).all(axis=(0, 2))
     t, Qe, g, fut = t[have], Qe[:, have], g[:, have], fut[have]
     times_iso = [from_ser(x).strftime("%Y-%m-%dT%H:%M:%SZ") for x in t]
-    state = "triggered" if stat >= thr else ("watch" if top >= thr else "none")
+    # watch from either signal: the whole (time-lagged) ensemble, or the members on the newest forecast run alone
+    # (it reacts first to a new forecast); a watch raised by the newest run alone maps that run's members
+    reason = None
+    watch_lag = top >= thr
+    watch_new = False
+    if lag_run is not None and trig.get("watch_on_latest", True):
+        sub = np.array([k for k in good if lag_run[k] == 0])
+        if len(sub) >= 10:
+            o2 = sub[np.argsort(peaks[sub])]
+            pick_new = {f"p{p}": int(o2[min(int(np.ceil(p / 100 * len(o2))) - 1, len(o2) - 1)]) for p in site.get("members", [50, 90, 95])}
+            watch_new = max(float(peaks[k]) for k in pick_new.values()) >= thr
+    state_now = "triggered" if stat >= thr else ("watch" if (watch_lag or watch_new) else "none")
+    if state_now == "watch":
+        reason = "ensemble" if watch_lag else "newest forecast run"
+        if not watch_lag:
+            pick = pick_new
+    # sticky watch: held for watch_hold_h after the last cycle that met the watch (or warning) condition
+    mpath = wdir / "state/alerts" / f"{name}.json"; mpath.parent.mkdir(parents=True, exist_ok=True)
+    memo = json.loads(mpath.read_text()) if mpath.exists() else {}
+    state = state_now
+    if state_now != "none":
+        memo["last_watch_utc"] = issued.isoformat()
+    elif memo.get("last_watch_utc"):
+        held_h = (issued - pd.Timestamp(memo["last_watch_utc"])).total_seconds() / 3600
+        if held_h <= float(trig.get("watch_hold_h", 0)):
+            state, reason = "watch", f"held (last met {pd.Timestamp(memo['last_watch_utc']).strftime('%H:%MZ')})"
     band = {f"q{p}": [round(float(v), 3) for v in np.nanpercentile(g[good], p, axis=0)] for p in BAND}
     peak_cms = {m: round(float(peaks[k]), 2) for m, k in pick.items()}
     peak_t = {m: times_iso[int(np.nanargmax(np.where(fut, g[k], -np.inf)))] for m, k in pick.items()}
 
     # memory of the last job
-    mpath = wdir / "state/alerts" / f"{name}.json"; mpath.parent.mkdir(parents=True, exist_ok=True)
-    memo = json.loads(mpath.read_text()) if mpath.exists() else {}
     job = memo.get("job")
     rep = site.get("repeat", {})
     stamp = issued.strftime("%Y%m%dT%H%MZ")
     map_on = trig.get("map_on", ["triggered"])          # states that start a 2D job (e.g. ["watch", "triggered"])
-    if state in map_on and args.no_submit:
+    if state_now in map_on and args.no_submit:
         print(f"{name} {stamp}: {state}: a 2D job would be submitted now for "
               + ", ".join(m for m in pick if peak_cms[m] >= thr) + " (--no-submit)", flush=True)
-    if state in map_on and not args.no_submit:
+    if state_now in map_on and not args.no_submit:
         age_h = (issued - pd.Timestamp(job["issued_utc"])).total_seconds() / 3600 if job else 1e9
         changed = (not job) or job.get("state") == "failed" or any(
             abs(peak_cms[m] / max(job["peaks_cms"].get(m, 1e-6), 1e-6) - 1) > rep.get("min_change", 0.1) for m in peak_cms)
@@ -238,7 +263,7 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args):
     memo["job"] = job
     mpath.write_text(json.dumps(memo, indent=1, default=str))
 
-    alert = dict(site=name, label=site["label"], issued_utc=issued.isoformat(), state=state, statistic=stat_name,
+    alert = dict(site=name, label=site["label"], issued_utc=issued.isoformat(), state=state, watch_reason=reason, statistic=stat_name,
                  statistic_cms=round(stat, 2), threshold_cms=thr, trigger_label=trig.get("label"),
                  observed_cms=None if q_obs is None else round(q_obs, 3),
                  forecast=dict(peak_cms=peak_cms, peak_time_utc=peak_t, members={m: members[k] for m, k in pick.items()},
@@ -273,7 +298,8 @@ def main():
     mem = pd.read_csv(wdir / sr["members_file"], comment="#")
     active = []
     for name, site in reg["sites"].items():
-        if run_site(name, site, wdir, a.web, Q, t, t_obs, links, mem, members, a) != "none":
+        lag_run = z["lag_run"] if "lag_run" in z.files else None
+        if run_site(name, site, wdir, a.web, Q, t, t_obs, links, mem, members, a, lag_run) != "none":
             active.append(name)
     idx = a.web / "alerts/index.json"
     idx.write_text(json.dumps(dict(updated_utc=from_ser(t_obs).isoformat(), alerts=active), indent=1))

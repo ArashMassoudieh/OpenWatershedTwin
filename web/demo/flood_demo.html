@@ -121,7 +121,7 @@ summary { cursor: pointer; font-weight: 600; }
       <summary>How this replay works</summary>
       <div class="small">
         <p>Every 15 minutes the twin advances each of 200 posterior members of its calibrated model with the radar rain observed so far, then forecasts 24 hours on NOAA HRRR rain: the 6 newest HRRR runs that had been published at that moment, one per member in turn. Only data available at each cycle is used: radar intervals once published, HRRR files from their upload times on the NOAA archive.</p>
-        <p>The trigger ranks the members by forecast peak at the gauge. A <b>watch</b> is raised when the 95th-percentile member reaches the flood threshold; a <b>warning</b> when the median does. Both start the 2D flood model (1 m, local-inertial) for the members that reach the threshold. While it computes, the page shows the pre-computed library map for each member's forecast peak stage; each 2D map appears when its computation would have finished, using the run times measured for this replay on a shared workstation.</p>
+        <p>The members are shared among the 6 HRRR runs by age: the newest run gets the most (shares fall with an e-folding time of 2 hours), so an old run that mistimed a storm keeps few members. The trigger ranks the members by forecast peak at the gauge. A <b>watch</b> is raised when the 95th-percentile member reaches the flood threshold, in the whole ensemble or among the members on the newest run alone (the first to react to a new forecast), and is held for 6 hours after the last cycle that met it; a <b>warning</b> when the median member reaches it. Both start the 2D flood model (1 m, local-inertial) for the members that reach the threshold. While it computes, the page shows the pre-computed library map for each member's forecast peak stage; each 2D map appears when its computation would have finished, using the run times measured for this replay on a shared workstation.</p>
         <p>Limits: one storm; false alarms on other days are not counted here. The flood maps show the model's maximum depth, not an official product.</p>
       </div>
     </details>
@@ -188,7 +188,9 @@ function render() {
   $("lead").innerHTML = parts.join(" · ");
   $("peaks").innerHTML = "Forecast peak: median <b>" + fmtN(cy.peak_cfs.p50) + "</b>, 90 % " + fmtN(cy.peak_cfs.p90) + ", 95 % <b>" + fmtN(cy.peak_cfs.p95) + "</b> cfs (threshold " + fmtN(D.threshold_cfs) + ")";
   $("explain").textContent = cy.state === "none" ? "No member at the 95th percentile reaches the threshold: no alert, no flood map."
-    : cy.state === "watch" ? "Watch: the 95th-percentile member reaches the threshold (the median does not). The 2D flood model starts for the members that reach it."
+    : cy.state === "watch" ? (cy.watch_reason && cy.watch_reason.startsWith("held") ? "Watch held: no forecast reaches the threshold at this cycle, but one did within the last 6 hours; the watch stays on (no new 2D job)."
+        : cy.watch_reason === "newest forecast run" ? "Watch: the members on the newest HRRR run reach the threshold (the whole ensemble does not yet). The 2D flood model starts for them."
+        : "Watch: the 95th-percentile member reaches the threshold (the median does not). The 2D flood model starts for the members that reach it.")
     : "Warning: the median member reaches the threshold.";
   drawFlow(cy, T, Tobs); drawRain(cy, T, Tobs); drawMaps(cy, T); drawJobs(T);
 }

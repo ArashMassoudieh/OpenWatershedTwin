@@ -83,7 +83,8 @@ def main():
     for f in cyc:
         z = np.load(f)
         Q, t, links, members, t_obs = z["Q"], z["t"], [str(x) for x in z["links"]], [int(x) for x in z["members"]], float(z["t_obs"])
-        st = ft.run_site(a.site, dict(site), work, R / "web", Q, t, t_obs, links, mem, members, args)
+        st = ft.run_site(a.site, dict(site), work, R / "web", Q, t, t_obs, links, mem, members, args,
+                         z["lag_run"] if "lag_run" in z.files else None)
         al = json.loads((R / "web/alerts" / f"{a.site}.json").read_text())
         maps = {}
         for m, v in al["maps"].items():
@@ -93,6 +94,7 @@ def main():
                                png="maps/" + Path(v["png"]).name, impacts=v.get("impacts"))
         b = al["forecast"]["band"]
         cycles.append(dict(cycle_utc=iso(se.from_ser(float(z["cycle"]))), data_utc=al["issued_utc"][:19] + "Z", state=st,
+                           watch_reason=al.get("watch_reason"),
                            statistic_cfs=round(al["statistic_cms"] / CFS), peak_cfs={m: round(v / CFS) for m, v in al["forecast"]["peak_cms"].items()},
                            peak_time_utc=al["forecast"]["peak_time_utc"], maps=maps,
                            band=dict(t=b["t_utc"], **{k: [round(x / CFS) for x in b[k]] for k in b if k != "t_utc"})))
