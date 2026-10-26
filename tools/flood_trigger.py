@@ -239,7 +239,8 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args, lag_
             abs(peak_cms[m] / max(job["peaks_cms"].get(m, 1e-6), 1e-6) - 1) > rep.get("min_change", 0.1) for m in peak_cms)
         if changed or age_h > rep.get("max_age_h", 1.0):
             # map only members whose forecast peak reaches the threshold (at a watch the median is often far below it)
-            send = {m: k for m, k in pick.items() if peak_cms[m] >= thr}
+            # highest member first: the job runs members in order, and the worst case is the map needed first
+            send = dict(sorted(((m, k) for m, k in pick.items() if peak_cms[m] >= thr), key=lambda x: -peak_cms[x[0]]))
             body = dict(site=site["service"]["site"], issued_utc=issued.isoformat(), requester=f"flood_trigger {name}",
                         members={m: dict(t_utc=times_iso, links={ln: [round(float(v), 5) for v in Qe[k, :, j]]
                                                                   for j, ln in enumerate(links)}) for m, k in send.items()})
