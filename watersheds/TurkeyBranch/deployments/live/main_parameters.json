@@ -1,15 +1,15 @@
 {
  "parameters": {
-  "p_Ksat": 0.02985204,
-  "p_Ksat_s": 1.117117,
-  "p_imp": 0.3777066,
-  "p_Kc": 0.4833764,
-  "p_Kc2": 0.1336477,
-  "p_gwK": 347.2289,
-  "p_gwKl": 496.1747,
-  "p_gwpor": 0.006890011,
-  "p_nch": 0.07211694,
-  "p_dsew": 0.4728459
+  "p_Ksat": 0.03176405,
+  "p_Ksat_s": 1.114021,
+  "p_imp": 0.3929871,
+  "p_Kc": 0.530451,
+  "p_Kc2": 0.1282331,
+  "p_gwK": 253.7016,
+  "p_gwKl": 550.4417,
+  "p_gwpor": 0.00662273,
+  "p_nch": 0.08361686,
+  "p_dsew": 0.4434331
  },
- "parameter_set": "Turkey Branch MCMC, highest posterior sample (row no. 9850, logp 11317.7); calib/WY2225F_v2MCMC, steps >= 300, without chains 13: 2970 samples; 200 drawn (seed 1)"
+ "parameter_set": "Turkey Branch MCMC, highest posterior sample (row no. 35128, logp 11316.3); calib/WY2225F_v2MCMC_s5, steps >= 1000: 16606 samples; 200 drawn (seed 1)"
 }
