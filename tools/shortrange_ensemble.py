@@ -79,11 +79,21 @@ def rain_rows(sr, unit: str, n: int, T: float, t_from: float, t_to: float, lag: 
             if starts:
                 a = a[a[:, 1] <= min(starts) + 1e-6]
         if len(a) and len(rows):
-            rows = rows[(rows[:, 1] <= a[0, 0] + 1e-6) | (rows[:, 0] >= a[-1, 1] - 1e-6)]
+            # replace the lower layers inside each contiguous block of this source (gaps > 1 h split blocks), so
+            # a source with data only in some windows (event radar) leaves the lower layers in between
+            br = np.flatnonzero(a[1:, 0] - a[:-1, 1] > 1 / 24 + 1e-6)
+            for b0, b1 in zip(np.r_[0, br + 1], np.r_[br, len(a) - 1]):
+                rows = rows[(rows[:, 1] <= a[b0, 0] + 1e-6) | (rows[:, 0] >= a[b1, 1] - 1e-6)]
         rows = np.vstack([rows, a]) if len(a) else rows
     rows = rows[np.argsort(rows[:, 0])] if len(rows) else rows
     prim = layers[-1][1]                                    # the highest-priority source defines T_obs
-    t_obs = float(prim[-1, 1]) if len(prim) else (float(rows[-1, 1]) if len(rows) else T)
+    # T_obs: the end of the primary source's last published interval; if the primary has nothing in the last
+    # primary_max_age_h (a replay between event radar windows), the end of the lower layers' data, up to T
+    age = sr["forcing"].get("primary_max_age_h", 24) / 24
+    if len(prim) and prim[-1, 1] >= T - age:
+        t_obs = float(prim[-1, 1])
+    else:
+        t_obs = float(min(rows[-1, 1], T)) if len(rows) else T
     rows = rows[rows[:, 1] <= t_obs + 1e-6]
     fc = sr["forcing"].get("forecast")
     if fc:
