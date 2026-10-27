@@ -81,14 +81,27 @@ def rating(path):
     return r.INDEP.astype(float).to_numpy(), r.DEP.astype(float).to_numpy()
 
 
-def with_error(Q, t, t_obs, links, site, mem, members):
-    """Q[row, time, link] with each member's AR(1) error, started at t_obs from the observed residual (row m is
-    member members[m] of the members file)."""
+def with_error(Q, t, t_obs, links, site, mem, members, state_path=None):
+    """Q[row, time, link] with each member's AR(1) error (row m is member members[m] of the members file).
+
+    The error of each member is one continuous AR(1) series across cycles (sigma_Q, tau_Q of the member): it
+    continues from the member's value at the previous cycle, saved in state_path, and starts from the stationary
+    distribution only at the very first cycle. No observation is needed, so the same holds at ungauged sites.
+    Optional (error_model.anchor = true): set it at t_obs from the observed residual at the gauge instead (the last
+    observation, carried to t_obs by the AR(1) model when it is older). Off by default: in the 2021-2025 replays
+    anchoring pinned every member to the rising observed flow and gave false warnings for all three near misses."""
     gi = links.index(site.get("error_model", {}).get("gauge_link", site["trigger"]["link"]))
     i0 = int(np.argmin(abs(t - t_obs)))
     q_obs, t_q = observed(site, t_obs, with_time=True)
+    anchor = bool(site.get("error_model", {}).get("anchor", False))
     rng = np.random.default_rng(SEED + int(round(t_obs * 96)))
     dt = float(t[1] - t[0])
+    prev = {}
+    if state_path is not None and Path(state_path).exists():
+        js = json.loads(Path(state_path).read_text())
+        if float(js["t"]) <= t_obs + 1e-9:
+            prev = {int(k): (float(js["t"]), float(v)) for k, v in js["eps"].items()}
+    e0 = {}
     out = Q.copy()
     for m, k in enumerate(members):
         sq, tq = float(mem.at[k, "s_Q"]), float(mem.at[k, "tau_Q"])
@@ -99,17 +112,24 @@ def with_error(Q, t, t_obs, links, site, mem, members):
         # Without any observation within OBS_MAX_AGE_D: a draw from the stationary distribution N(0, sigma).
         jq = int(np.argmin(abs(t - t_q))) if q_obs else -1
         qs = Q[m, jq, gi] if q_obs and t[0] <= t_q else np.nan
-        if q_obs and np.isfinite(qs) and qs > 0:
+        if anchor and q_obs and np.isfinite(qs) and qs > 0:
             a = max(float(t[i0] - t_q), 0.0); f = math.exp(-a / tq)
             e[i0] = math.log(q_obs / qs) * f
             if f < 1:                                        # no draw when current: replays reproduce exactly
                 e[i0] += sq * math.sqrt(1 - f * f) * rng.standard_normal()
+        elif int(k) in prev:                                 # no observation: continue the member's own series
+            tp, ep = prev[int(k)]; f = math.exp(-max(t_obs - tp, 0.0) / tq)
+            e[i0] = ep * f + sq * math.sqrt(max(1 - f * f, 0.0)) * rng.standard_normal()
         else:
             e[i0] = sq * rng.standard_normal()
+        e0[int(k)] = float(e[i0])
         eta = rng.standard_normal(len(t))
         for i in range(i0 + 1, len(t)):
             e[i] = phi * e[i - 1] + sq * math.sqrt(1 - phi ** 2) * eta[i]
         out[m, i0:] = Q[m, i0:] * np.exp(e[i0:])[:, None]
+    if state_path is not None:
+        Path(state_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(state_path).write_text(json.dumps({"t": t_obs, "eps": e0}))
     return out, q_obs
 
 
@@ -198,7 +218,7 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args, lag_
     site["_name"] = name
     trig = site["trigger"]
     thr = float(trig["threshold_cms"])
-    Qe, q_obs = with_error(Q, t, t_obs, links, site, mem, members)
+    Qe, q_obs = with_error(Q, t, t_obs, links, site, mem, members, state_path=wdir / "state/alerts" / f"{name}_ar1.json")
     ti = links.index(trig["link"])
     fut = t >= t_obs - 1e-9
     g = Qe[:, :, ti]
