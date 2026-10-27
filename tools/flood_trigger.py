@@ -27,6 +27,7 @@ Writes <web>/alerts/<site>.json (the viewer's popup), <web>/alerts/index.json (a
   flood_trigger.py <watershed_dir> --web <dir> --library-png <service sites dir>   # render the library maps once
 """
 import argparse
+import functools
 import json
 import math
 import os
@@ -48,20 +49,30 @@ BAND = (5, 25, 50, 75, 95)
 
 
 # ---------------------------------------------------------------------------------------------- inputs
-def observed(site, t_obs):
-    """Observed gauge flow (m3/s) at t_obs (the last value within 2 h before it), or None.
+@functools.lru_cache(maxsize=4)
+def _obs_series(path, fmt, mtime):
+    """(t, v) of an observation file, cached per file and modification time (replays read it every cycle)."""
+    if fmt == "usgs_csv":
+        d = pd.read_csv(path, usecols=["time", "value"], parse_dates=["time"]).dropna()
+        return d.time.map(ser).to_numpy(), d.value.to_numpy() * CFS
+    d = pd.read_csv(path, header=None, names=["t", "v"], comment="#").apply(pd.to_numeric, errors="coerce").dropna()
+    return d.t.to_numpy(), d.v.to_numpy()
+
+
+OBS_MAX_AGE_D = 2.0                 # an observed residual older than this carries no information (>> tau_Q ~ 3 h)
+
+
+def observed(site, t_obs, with_time=False):
+    """Last observed gauge flow (m3/s) at or before t_obs within OBS_MAX_AGE_D, or None; with_time: (q, t_q).
     error_model.obs: {"file": ..., "format": "ohq"} (usgs_feed.py: t,value in m3/s) or "usgs_csv" (time,value cfs)."""
     o = site.get("error_model", {}).get("obs")
     if not o or not Path(o["file"]).exists():
-        return None
-    if o.get("format", "ohq") == "usgs_csv":
-        d = pd.read_csv(o["file"], usecols=["time", "value"], parse_dates=["time"]).dropna()
-        t, v = d.time.map(ser).to_numpy(), d.value.to_numpy() * CFS
-    else:
-        d = pd.read_csv(o["file"], header=None, names=["t", "v"], comment="#").apply(pd.to_numeric, errors="coerce").dropna()
-        t, v = d.t.to_numpy(), d.v.to_numpy()
-    k = np.flatnonzero((t <= t_obs + 1e-6) & (t >= t_obs - 2 / 24) & (v > 0))
-    return float(v[k[-1]]) if len(k) else None
+        return (None, None) if with_time else None
+    t, v = _obs_series(o["file"], o.get("format", "ohq"), Path(o["file"]).stat().st_mtime)
+    k = np.flatnonzero((t <= t_obs + 1e-6) & (t >= t_obs - OBS_MAX_AGE_D) & (v > 0))
+    if not len(k):
+        return (None, None) if with_time else None
+    return (float(v[k[-1]]), float(t[k[-1]])) if with_time else float(v[k[-1]])
 
 
 def rating(path):
@@ -75,7 +86,7 @@ def with_error(Q, t, t_obs, links, site, mem, members):
     member members[m] of the members file)."""
     gi = links.index(site.get("error_model", {}).get("gauge_link", site["trigger"]["link"]))
     i0 = int(np.argmin(abs(t - t_obs)))
-    q_obs = observed(site, t_obs)
+    q_obs, t_q = observed(site, t_obs, with_time=True)
     rng = np.random.default_rng(SEED + int(round(t_obs * 96)))
     dt = float(t[1] - t[0])
     out = Q.copy()
@@ -83,8 +94,18 @@ def with_error(Q, t, t_obs, links, site, mem, members):
         sq, tq = float(mem.at[k, "s_Q"]), float(mem.at[k, "tau_Q"])
         phi = math.exp(-dt / tq)
         e = np.zeros(len(t))
-        qs = Q[m, i0, gi]
-        e[i0] = math.log(q_obs / qs) if q_obs and np.isfinite(qs) and qs > 0 else 0.0
+        # residual at the last observation, carried to t_obs by the AR(1) model: conditional mean r exp(-a/tau) and
+        # spread sigma sqrt(1 - exp(-2a/tau)) (exact for a gauge outage; a = 0 when the observation is current).
+        # Without any observation within OBS_MAX_AGE_D: a draw from the stationary distribution N(0, sigma).
+        jq = int(np.argmin(abs(t - t_q))) if q_obs else -1
+        qs = Q[m, jq, gi] if q_obs and t[0] <= t_q else np.nan
+        if q_obs and np.isfinite(qs) and qs > 0:
+            a = max(float(t[i0] - t_q), 0.0); f = math.exp(-a / tq)
+            e[i0] = math.log(q_obs / qs) * f
+            if f < 1:                                        # no draw when current: replays reproduce exactly
+                e[i0] += sq * math.sqrt(1 - f * f) * rng.standard_normal()
+        else:
+            e[i0] = sq * rng.standard_normal()
         eta = rng.standard_normal(len(t))
         for i in range(i0 + 1, len(t)):
             e[i] = phi * e[i - 1] + sq * math.sqrt(1 - phi ** 2) * eta[i]
@@ -264,7 +285,9 @@ def run_site(name, site, wdir, web, Q, t, t_obs, links, mem, members, args, lag_
     memo["job"] = job
     mpath.write_text(json.dumps(memo, indent=1, default=str))
 
+    p_exceed = float(np.mean(peaks[good] >= thr)) if len(good) else None      # forecast probability of reaching the threshold
     alert = dict(site=name, label=site["label"], issued_utc=issued.isoformat(), state=state, watch_reason=reason, statistic=stat_name,
+                 p_exceed=None if p_exceed is None else round(p_exceed, 4),
                  statistic_cms=round(stat, 2), threshold_cms=thr, trigger_label=trig.get("label"),
                  observed_cms=None if q_obs is None else round(q_obs, 3),
                  forecast=dict(peak_cms=peak_cms, peak_time_utc=peak_t, members={m: members[k] for m, k in pick.items()},
