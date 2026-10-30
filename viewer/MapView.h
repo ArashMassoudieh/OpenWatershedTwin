@@ -34,6 +34,14 @@ struct ColorScale
     QColor color(double v) const;
 };
 
+// a flood-alert site on the map (clicking it opens the alert popup)
+struct AlertMarker
+{
+    QString id, label;
+    double lon = 0, lat = 0;
+    QColor color;
+};
+
 class MapView : public QWidget
 {
     Q_OBJECT
@@ -51,6 +59,7 @@ public:
     // colouring of the units: value per unit id (NaN = no data)
     void setValues(const QHash<QString, double> &values, const ColorScale &scale);
     void setSelectedUnit(const QString &id);
+    void setAlertMarkers(const QVector<AlertMarker> &markers);
     void fitToExtent();
     QImage renderImage(const QSize &size);   // off-screen rendering (screenshots)
 
@@ -58,6 +67,7 @@ signals:
     void unitContextMenu(const QString &unitId, const QPoint &globalPos);
     void gageContextMenu(const QString &gageId, const QPoint &globalPos);
     void unitClicked(const QString &unitId);
+    void alertClicked(const QString &siteId);
 
 protected:
     void paintEvent(QPaintEvent *) override;
@@ -77,6 +87,8 @@ private:
     QPointF toWorld(const QPointF &s) const;
     QString unitAt(const QPointF &screen) const;
     QString gageAt(const QPointF &screen) const;
+    int alertAt(const QPointF &screen) const;
+    QPointF alertScreen(const AlertMarker &m) const;
     void zoomAbout(const QPointF &screen, double factor);
     void paintMap(QPainter &p, const QSize &size);
     void paintLegend(QPainter &p, const QSize &size);
@@ -89,6 +101,7 @@ private:
     struct Mask { QPainterPath path; QString label; };
     QVector<Mask> masks_;
     QString maskAt(const QPointF &screen) const;
+    QVector<AlertMarker> alerts_;
     QHash<QString, double> values_;
     ColorScale scale_;
     bool hasValues_ = false;

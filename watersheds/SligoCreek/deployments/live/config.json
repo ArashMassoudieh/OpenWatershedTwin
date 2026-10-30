@@ -21,7 +21,7 @@
    "p_nsSy": 0.01261875126,
    "p_nsK": 12.8233401
   },
-  "parameter_set": "Sligo Creek LM optimum (calib/WY1819v3ar1_v2f5LM2/LM_output.txt; final negative log-likelihood: -8.99023470e+03); 95 % band: MCMC calib/WY1819v3ar1_v2f5MCMC/stage2, steps >= 700: 1600 samples; 200 drawn (seed 1)",
+  "parameter_set": "Sligo Creek LM optimum (calib/WY1819v3ar1_v2f5LM2/LM_output.txt; final negative log-likelihood: -8.99023470e+03); 95 % band: MCMC calib/WY1819v3ar1_v2f5MCMC3/stage4, steps >= 451: 2792 samples; 200 drawn (seed 1)",
   "ensemble": {
    "file": "ensemble.csv",
    "threads": 4,

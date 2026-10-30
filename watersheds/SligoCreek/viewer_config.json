@@ -50,7 +50,7 @@
  },
  "intervals": {
   "label": "95% intervals",
-  "tooltip": "Shade the 95% parameter-uncertainty band: 2.5 to 97.5 percentiles of the model run with 200 parameter sets drawn from the calibration posterior (MCMC). The model line uses the calibrated (Levenberg-Marquardt) parameter set. Measurement and model-structure errors are not included."
+  "tooltip": "Darker shading: 95% parameter-uncertainty interval (2.5 to 97.5 percentiles of the model run with 200 parameter sets from the calibration posterior, MCMC). Lighter shading, for streamflow and for stage at the gage: 95% prediction interval, which adds the model-structure, rainfall and measurement error estimated in the calibration (log-normal: standard deviation 0.45 of log flow, 0.13 of log stage; 93-98% of the measured hours fall inside it in 2017-2025). In the forecast it does not include the extra error of forecast rain. The model line uses the calibrated (Levenberg-Marquardt) parameter set."
  },
  "rain_source": "P_{unit}",
  "gages": [
@@ -64,14 +64,17 @@
      "unit": "m3/s",
      "source": "G15-R19:flow",
      "scale": 1.1574074e-05,
-     "observed": "{gage}_flow.csv"
+     "observed": "{gage}_flow.csv",
+     "prediction_sd_log": 0.449,
+     "chart_log": true
     },
     {
      "id": "H",
      "label": "Stage above zero flow",
      "unit": "m",
      "source": "G15:obs_depth",
-     "observed": "{gage}_stage.csv"
+     "observed": "{gage}_stage.csv",
+     "prediction_sd_log": 0.126
     }
    ]
   }
@@ -394,7 +397,9 @@
      "scale": 1.1574074e-05,
      "map": true,
      "palette": "flow",
-     "log": true
+     "log": true,
+     "prediction_sd_log": 0.449,
+     "chart_log": true
     },
     {
      "id": "depth",

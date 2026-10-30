@@ -1,7 +1,7 @@
 {
  "name": "TurkeyBranch",
  "title": "Turkey Branch (Montgomery County, Maryland) OpenHydroQual watershed model",
- "model_file": "/home/arash/Dropbox/OHQ Watershed Models/Turkey Branch/model/WY2225F_v2.ohq",
+ "model_file": "/home/arash/Dropbox/OHQ Watershed Models/Turkey Branch/model/WY2225F_v2f2.ohq",
  "system_values": {
   "alloutputfile": "output.txt",
   "observed_outputfile": "observed_output.txt"

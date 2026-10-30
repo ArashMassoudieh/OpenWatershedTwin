@@ -15,6 +15,7 @@
 #include <QLineSeries>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QLogValueAxis>
 #include <QValueAxis>
 #include <QVBoxLayout>
 #include <cmath>
@@ -60,7 +61,34 @@ Range timeWindow(const QJsonObject &doc, TimeMode mode)
     return {std::max(tmin, now - 45.0), tmax};       // recent history and the forecast
 }
 
-bool hasBand(const QJsonObject &s) { return s.contains("lo") && s.contains("hi"); }
+bool hasParamBand(const QJsonObject &s) { return s.contains("lo") && s.contains("hi"); }
+// "pred_sd": log-space standard deviation of a multiplicative, log-normal error of the series (model structure,
+// forcing and measurement error, from the calibration; viewer_config "prediction_sd_log"), set by MainWindow
+bool hasPrediction(const QJsonObject &s) { return s.value("pred_sd").toDouble() > 0; }
+bool hasBand(const QJsonObject &s) { return hasParamBand(s) || hasPrediction(s); }
+constexpr double kZ95 = 1.959964;
+
+// 95 % prediction interval of value v: the log-normal error combined with the parameter band (treated as log-normal,
+// its 2.5..97.5 % range = +-kZ95 sd), i.e. v exp(+-kZ95 sqrt(sd^2 + sd_par^2)); false where v <= 0
+bool predictionAt(const QJsonObject &s, int i, double &lo, double &hi)
+{
+    const QJsonArray v = s.value("v").toArray();
+    if (i >= v.size() || v[i].isNull()) return false;
+    const double vi = v[i].toDouble();
+    if (!(vi > 0)) return false;
+    const double sd = s.value("pred_sd").toDouble();
+    double sp = 0;
+    if (hasParamBand(s))
+    {
+        const QJsonArray l = s.value("lo").toArray(), h = s.value("hi").toArray();
+        if (i < l.size() && i < h.size() && !l[i].isNull() && !h[i].isNull() && l[i].toDouble() > 0 && h[i].toDouble() > 0)
+            sp = std::log(h[i].toDouble() / l[i].toDouble()) / (2 * kZ95);
+    }
+    const double w = kZ95 * std::sqrt(sd * sd + sp * sp);
+    lo = vi * std::exp(-w);
+    hi = vi * std::exp(w);
+    return true;
+}
 
 QChartView *makeChart(const QString &title, const QString &unit, const QJsonObject &s, const QJsonObject *s2,
                       const QString &label2, Range r, double now, bool bars, int height, bool band)
@@ -75,7 +103,19 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
     ax->setRange(QDateTime::fromMSecsSinceEpoch(toMs(r.t0), QTimeZone::UTC),
                  QDateTime::fromMSecsSinceEpoch(toMs(r.t1), QTimeZone::UTC));
     ax->setTickCount(6);
-    auto *ay = new QValueAxis;
+    // "chart_log" (viewer_config, set by MainWindow): logarithmic value axis; non-positive points are left out
+    const bool logy = !bars && s.value("chart_log").toBool();
+    QAbstractAxis *ay;
+    if (logy)
+    {
+        auto *la = new QLogValueAxis;
+        la->setBase(10);
+        la->setLabelFormat("%g");
+        la->setMinorTickCount(8);
+        ay = la;
+    }
+    else
+        ay = new QValueAxis;
     ay->setTitleText(unit == "-" ? QString() : unit);
     chart->addAxis(ax, Qt::AlignBottom);
     chart->addAxis(ay, Qt::AlignLeft);
@@ -91,6 +131,7 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
             if (i + 1 < t.size()) width = t[i + 1].toDouble() - t[i].toDouble();
             if (v[i].isNull()) continue;
             const double ti = t[i].toDouble(), vi = v[i].toDouble();
+            if (logy && !(vi > 0)) continue;
             if (ti < r.t0 - 1 || ti > r.t1 + 1) continue;
             ls->append(toMs(ti), vi);                                // bars as a step line over each interval
             if (step) ls->append(toMs(ti + width), vi);
@@ -119,14 +160,44 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
             ls->attachAxis(ay);
         }
     };
-    // band (lo..hi) behind the model line
-    if (band && !bars && hasBand(s))
+    // prediction band (lightest), behind the parameter band
+    if (band && !bars && hasPrediction(s))
+    {
+        auto *up = new QLineSeries, *dn = new QLineSeries;
+        const QJsonArray t = s.value("t").toArray();
+        for (int i = 0; i < t.size(); ++i)
+        {
+            const double ti = t[i].toDouble();
+            if (ti < r.t0 - 1 || ti > r.t1 + 1) continue;
+            double plo, phi;
+            if (!predictionAt(s, i, plo, phi)) continue;
+            up->append(toMs(ti), phi);
+            dn->append(toMs(ti), plo);
+            ymin = std::min(ymin, plo);
+            ymax = std::max(ymax, phi);
+        }
+        if (up->count() > 1)
+        {
+            auto *area = new QAreaSeries(up, dn);
+            area->setName(QObject::tr("95% prediction"));
+            area->setBrush(QColor(107, 174, 214, 90));
+            area->setPen(Qt::NoPen);
+            chart->addSeries(area);
+            area->attachAxis(ax);
+            area->attachAxis(ay);
+            chart->legend()->setVisible(true);
+        }
+        else { delete up; delete dn; }
+    }
+    // parameter band (lo..hi) behind the model line
+    if (band && !bars && hasParamBand(s))
     {
         auto *up = new QLineSeries, *dn = new QLineSeries;
         const QJsonArray t = s.value("t").toArray(), lo = s.value("lo").toArray(), hi = s.value("hi").toArray();
         for (int i = 0; i < t.size() && i < lo.size() && i < hi.size(); ++i)
         {
             if (lo[i].isNull() || hi[i].isNull()) continue;
+            if (logy && !(lo[i].toDouble() > 0)) continue;
             const double ti = t[i].toDouble();
             if (ti < r.t0 - 1 || ti > r.t1 + 1) continue;
             up->append(toMs(ti), hi[i].toDouble());
@@ -137,8 +208,8 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
         if (up->count() > 1)
         {
             auto *area = new QAreaSeries(up, dn);
-            area->setName(QObject::tr("95% interval"));
-            area->setBrush(QColor(33, 113, 181, 90));
+            area->setName(hasPrediction(s) ? QObject::tr("95% parameters") : QObject::tr("95% interval"));
+            area->setBrush(QColor(33, 113, 181, hasPrediction(s) ? 150 : 90));
             area->setPen(Qt::NoPen);
             chart->addSeries(area);
             area->attachAxis(ax);
@@ -151,9 +222,17 @@ QChartView *makeChart(const QString &title, const QString &unit, const QJsonObje
     if (s2) addLine(*s2, label2, QColor("#d94801"), false);       // observations
     if (!std::isfinite(ymin)) { ymin = 0; ymax = 1; }
     if (bars) ymin = 0;
-    const double pad = (ymax > ymin) ? 0.06 * (ymax - ymin) : 0.5;
-    const double lowEdge = (bars || ymin >= 0) ? std::max(0.0, ymin - pad) : ymin - pad;   // non-negative stays >= 0
-    ay->setRange(lowEdge, ymax + pad);
+    double pad = (ymax > ymin) ? 0.06 * (ymax - ymin) : 0.5;
+    double lowEdge = (bars || ymin >= 0) ? std::max(0.0, ymin - pad) : ymin - pad;   // non-negative stays >= 0
+    if (logy)
+    {
+        if (!(ymin > 0)) { ymin = 1e-3; ymax = std::max(ymax, 1.0); }
+        lowEdge = ymin / 1.5;                                        // multiplicative padding on a log axis
+        pad = ymax * 0.5;
+        static_cast<QLogValueAxis *>(ay)->setRange(lowEdge, ymax + pad);
+    }
+    else
+        static_cast<QValueAxis *>(ay)->setRange(lowEdge, ymax + pad);
 
     // forecast shading and the "now" line
     if (now < r.t1)
@@ -237,10 +316,12 @@ void ChartPanel::setIntervalText(const QString &label, const QString &tooltip)
     intervalTip_ = tooltip;
 }
 
-void ChartPanel::show(const QString &title, const QJsonObject &unitDoc, const QStringList &keys, TimeMode mode)
+void ChartPanel::show(const QString &title, const QJsonObject &unitDoc, const QStringList &keysIn, TimeMode mode)
 {
-    clear(title);
+    // copy before clear(): the "95% intervals" checkbox re-shows with doc_ and keys_ themselves, which clear() empties
     const QJsonObject doc = withTimes(unitDoc);
+    const QStringList keys = keysIn;
+    clear(title);
     doc_ = doc;
     keys_ = keys;
     mode_ = mode;
@@ -281,7 +362,7 @@ void ChartPanel::exportCsv()
     const QJsonObject series = doc_.value("series").toObject();
     const Range r = timeWindow(doc_, mode_);
     const bool band = intervals_->isEnabled() && intervals_->isChecked();
-    QByteArray out = band ? "series,unit,time_utc,value,lo,hi\n" : "series,unit,time_utc,value\n";
+    QByteArray out = band ? "series,unit,time_utc,value,lo,hi,pred_lo,pred_hi\n" : "series,unit,time_utc,value\n";
     QStringList keys = keys_;
     if (series.contains("rain")) keys.prepend("rain");
     for (const QString &k : keys)
@@ -300,10 +381,14 @@ void ChartPanel::exportCsv()
             {
                 const double ti = t[i].toDouble();
                 if (ti < r.t0 || ti > r.t1 || v[i].isNull()) continue;
+                QString pred = ",,";
+                double plo, phi;
+                if (hasPrediction(s) && predictionAt(s, i, plo, phi))
+                    pred = "," + QString::number(plo, 'g', 8) + "," + QString::number(phi, 'g', 8);
                 out += (kk + "," + s.value("unit").toString() + "," +
                         QDateTime::fromMSecsSinceEpoch(toMs(ti), QTimeZone::UTC).toString(Qt::ISODate) + "," +
                         QString::number(v[i].toDouble(), 'g', 8) +
-                        (band ? "," + num(lo, i) + "," + num(hi, i) : QString()) + "\n").toUtf8();
+                        (band ? "," + num(lo, i) + "," + num(hi, i) + pred : QString()) + "\n").toUtf8();
             }
         }
     }

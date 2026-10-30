@@ -14,7 +14,14 @@ DataSource::DataSource(const QString &base, QObject *parent) : QObject(parent), 
     if (!base_.endsWith('/')) base_ += '/';
 }
 
-void DataSource::getJson(const QString &rel, std::function<void(const QJsonDocument &, const QString &)> done)
+QUrl DataSource::urlFor(const QString &rel) const
+{
+    if (rel.startsWith("http://") || rel.startsWith("https://")) return QUrl(rel);
+    if (local_) return QUrl::fromLocalFile(QDir(base_).absoluteFilePath(rel));
+    return QUrl(base_).resolved(QUrl(rel));
+}
+
+void DataSource::fetch(const QString &rel, std::function<void(const QByteArray &, bool, const QString &)> done)
 {
     if (local_)
     {
@@ -22,10 +29,8 @@ void DataSource::getJson(const QString &rel, std::function<void(const QJsonDocum
         const QString path = QDir(base_).filePath(rel);
         QTimer::singleShot(0, this, [path, done]() {
             QFile f(path);
-            if (!f.open(QIODevice::ReadOnly)) { done(QJsonDocument(), "cannot open " + path); return; }
-            QJsonParseError pe;
-            const QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &pe);
-            done(doc, doc.isNull() ? path + ": " + pe.errorString() : QString());
+            if (!f.open(QIODevice::ReadOnly)) { done(QByteArray(), false, "cannot open " + path); return; }
+            done(f.readAll(), true, path);
         });
         return;
     }
@@ -38,9 +43,22 @@ void DataSource::getJson(const QString &rel, std::function<void(const QJsonDocum
     QNetworkReply *reply = nam_.get(req);
     connect(reply, &QNetworkReply::finished, this, [reply, rel, done]() {
         reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError) { done(QJsonDocument(), rel + ": " + reply->errorString()); return; }
-        QJsonParseError pe;
-        const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll(), &pe);
-        done(doc, doc.isNull() ? rel + ": " + pe.errorString() : QString());
+        if (reply->error() != QNetworkReply::NoError) { done(QByteArray(), false, rel + ": " + reply->errorString()); return; }
+        done(reply->readAll(), true, rel);
     });
+}
+
+void DataSource::getJson(const QString &rel, std::function<void(const QJsonDocument &, const QString &)> done)
+{
+    fetch(rel, [done](const QByteArray &bytes, bool ok, const QString &what) {
+        if (!ok) { done(QJsonDocument(), what); return; }
+        QJsonParseError pe;
+        const QJsonDocument doc = QJsonDocument::fromJson(bytes, &pe);
+        done(doc, doc.isNull() ? what + ": " + pe.errorString() : QString());
+    });
+}
+
+void DataSource::getBytes(const QString &rel, std::function<void(const QByteArray &, bool)> done)
+{
+    fetch(rel, [done](const QByteArray &bytes, bool ok, const QString &) { done(bytes, ok); });
 }

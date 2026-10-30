@@ -8,10 +8,14 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QMainWindow>
+#include <QMap>
+#include <QPointer>
 #include <QToolBar>
 #include <functional>
 
 class DataSource;
+class FloodAlertDialog;
+class QHBoxLayout;
 class MapView;
 class QButtonGroup;
 class QComboBox;
@@ -32,6 +36,10 @@ public:
     void showUnit(const QString &unit, TimeMode mode, ChartScope scope);
     void showGage(const QString &gage);
     void selectElement(const QString &elementId);
+    // flood alerts (docs/viewer_data.md, "Flood alerts")
+    QStringList alertSites() const { return alerts_.keys(); }
+    void openAlert(const QString &site);
+    FloodAlertDialog *alertDialog() const;
 
 private slots:
     void onElementChanged();
@@ -48,6 +56,11 @@ private:
     QJsonObject currentVariable() const;
     void withUnitDoc(const QString &unit, std::function<void(const QJsonObject &)> f);
     void error(const QString &msg);
+    void applyStatus(const QJsonObject &status);     // status line
+    void pollAlerts();                                // alerts/index.json (fallback status.json "alerts"), then
+                                                      // the alert files; every 2 min while an alert is active
+    void applyAlertList(const QJsonArray &sites);     // starts or stops the 2-min polling
+    void updateAlertBanner();
 
     DataSource *data_;
     MapView *map_ = nullptr;
@@ -70,4 +83,9 @@ private:
     QList<QAction *> linkActions_;
     ChartScope selectedScope_ = ChartScope::Variable;
     int pendingLayers_ = 0;
+    QWidget *alertBar_ = nullptr;
+    QHBoxLayout *alertLayout_ = nullptr;
+    QTimer *alertTimer_ = nullptr;
+    QMap<QString, QJsonObject> alerts_;               // site -> alert file (active alerts only)
+    QPointer<FloodAlertDialog> alertDialog_;
 };
