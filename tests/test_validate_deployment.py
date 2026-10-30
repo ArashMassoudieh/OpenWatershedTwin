@@ -40,6 +40,51 @@ class ValidatorTests(unittest.TestCase):
         validator.check_versions(config, Path("config.json"), findings)
         self.assertIn("VERSION_AMBIGUITY", {finding.code for finding in findings})
 
+    def test_flood_site_cross_check(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            root = repo / "watersheds" / "Example"
+            service_dir = repo / "services" / "floodmap" / "sites"
+            root.mkdir(parents=True)
+            service_dir.mkdir(parents=True)
+            (root / "sites.json").write_text(json.dumps({
+                "shortrange": {"interval_min": 15, "horizon_h": 24, "processes": 2},
+                "sites": {"gage": {
+                    "trigger": {"link": "Q_gage", "threshold_cms": 10.0},
+                    "members": [50, 90, 95],
+                    "links": {"Q_gage": ["R1:flow"]},
+                    "service": {"url": "http://127.0.0.1:8300", "site": "example"},
+                }},
+            }))
+            (service_dir / "example.json").write_text(json.dumps({
+                "window": {"trigger_link": "Q_other", "threshold_cms": 11.0},
+            }))
+            findings = []
+            validator.check_flood_sites(repo, root, findings)
+            codes = {finding.code for finding in findings}
+            self.assertIn("TRIGGER_LINK_MISMATCH", codes)
+            self.assertIn("TRIGGER_THRESHOLD_MISMATCH", codes)
+
+    def test_flood_site_rejects_bad_members(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            root = repo / "watersheds" / "Example"
+            root.mkdir(parents=True)
+            (root / "sites.json").write_text(json.dumps({
+                "shortrange": {"interval_min": 15, "horizon_h": 24, "processes": 2},
+                "sites": {"gage": {
+                    "trigger": {"link": "Q_gage", "threshold_cms": 10.0},
+                    "members": [95, 50, 50],
+                    "links": {"Q_gage": ["R1:flow"]},
+                    "service": {"url": "http://127.0.0.1:8300"},
+                }},
+            }))
+            findings = []
+            validator.check_flood_sites(repo, root, findings)
+            codes = {finding.code for finding in findings}
+            self.assertIn("INVALID_TRIGGER_MEMBERS", codes)
+            self.assertIn("MISSING_SERVICE_SITE", codes)
+
     def test_repository_has_no_structural_errors(self):
         repo = Path(__file__).resolve().parents[1]
         errors = [

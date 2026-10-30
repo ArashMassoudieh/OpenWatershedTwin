@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import sys
+from urllib.parse import urlparse
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -159,6 +160,75 @@ def check_model_package(root: Path, out: list[Finding]) -> None:
     check_reference(root, package.get("parameters_from"), f"{path}:parameters_from", "MISSING_PARAMETERS_SOURCE", out)
 
 
+def check_flood_sites(repo: Path, root: Path, out: list[Finding]) -> None:
+    """Cross-check the trigger registry against flood-service site definitions."""
+    path = root / "sites.json"
+    if not path.exists():
+        return
+    registry = load_json(path, out)
+    sites = registry.get("sites") if isinstance(registry, dict) else None
+    if not isinstance(sites, dict) or not sites:
+        out.append(Finding("ERROR", "INVALID_SITE_REGISTRY", str(path), "Expected a non-empty 'sites' object"))
+        return
+
+    short = registry.get("shortrange", {})
+    for field in ("interval_min", "horizon_h", "processes"):
+        value = short.get(field) if isinstance(short, dict) else None
+        if not isinstance(value, (int, float)) or value <= 0:
+            out.append(Finding("ERROR", "INVALID_SHORTRANGE", f"{path}:shortrange.{field}", "Expected a positive number"))
+
+    for name, site in sites.items():
+        location = f"{path}:sites.{name}"
+        if not isinstance(site, dict):
+            out.append(Finding("ERROR", "INVALID_FLOOD_SITE", location, "Expected an object"))
+            continue
+        trigger = site.get("trigger", {})
+        links = site.get("links", {})
+        link = trigger.get("link") if isinstance(trigger, dict) else None
+        threshold = trigger.get("threshold_cms") if isinstance(trigger, dict) else None
+        if not isinstance(link, str) or link not in links:
+            out.append(Finding("ERROR", "UNKNOWN_TRIGGER_LINK", f"{location}.trigger.link", f"Trigger link is absent from sites.{name}.links: {link!r}"))
+        if not isinstance(threshold, (int, float)) or threshold <= 0:
+            out.append(Finding("ERROR", "INVALID_TRIGGER_THRESHOLD", f"{location}.trigger.threshold_cms", "Expected a positive discharge"))
+
+        members = site.get("members")
+        if (not isinstance(members, list) or not members or
+                any(not isinstance(value, (int, float)) or not 0 <= value <= 100 for value in members) or
+                members != sorted(set(members))):
+            out.append(Finding("ERROR", "INVALID_TRIGGER_MEMBERS", f"{location}.members", "Expected unique, increasing percentiles from 0 to 100"))
+
+        service = site.get("service", {})
+        service_name = service.get("site") if isinstance(service, dict) else None
+        service_path = repo / "services" / "floodmap" / "sites" / f"{service_name}.json"
+        if not isinstance(service_name, str) or not service_name:
+            out.append(Finding("ERROR", "MISSING_SERVICE_SITE", f"{location}.service.site", "Expected a flood-service site name"))
+            continue
+        definition = load_json(service_path, out)
+        if not isinstance(definition, dict):
+            continue
+
+        window = definition.get("window", {})
+        if isinstance(window, dict):
+            if link != window.get("trigger_link"):
+                out.append(Finding("ERROR", "TRIGGER_LINK_MISMATCH", str(service_path), f"Registry uses {link!r}; service uses {window.get('trigger_link')!r}"))
+            service_threshold = window.get("threshold_cms")
+            if (isinstance(threshold, (int, float)) and isinstance(service_threshold, (int, float)) and
+                    abs(float(threshold) - float(service_threshold)) > 1e-9):
+                out.append(Finding("ERROR", "TRIGGER_THRESHOLD_MISMATCH", str(service_path), f"Registry uses {threshold}; service uses {service_threshold}"))
+        else:
+            out.append(Finding("ERROR", "INVALID_SERVICE_WINDOW", str(service_path), "Expected a 'window' object"))
+
+        url = service.get("url") if isinstance(service, dict) else None
+        parsed = urlparse(url) if isinstance(url, str) else None
+        if parsed is None or parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            out.append(Finding("ERROR", "INVALID_SERVICE_URL", f"{location}.service.url", "Expected an http(s) URL"))
+
+        for field in ("data_root", "dwe_binary"):
+            value = definition.get(field)
+            if isinstance(value, str) and Path(value).is_absolute():
+                out.append(Finding("WARNING", "NONPORTABLE_PATH", f"{service_path}:{field}", f"Machine-specific absolute path: {value}"))
+
+
 def validate_watershed(repo: Path, name: str) -> list[Finding]:
     out: list[Finding] = []
     root = repo / "watersheds" / name
@@ -225,6 +295,7 @@ def validate_watershed(repo: Path, name: str) -> list[Finding]:
 
     check_versions(config, config_path, out)
     check_model_package(root, out)
+    check_flood_sites(repo, root, out)
     return sorted(out, key=lambda finding: (ORDER[finding.severity], finding.code, finding.location))
 
 
