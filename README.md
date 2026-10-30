@@ -83,6 +83,9 @@ python3 tools/validate_deployment.py --watershed RockCreek
 python3 tools/validate_deployment.py --json > validation.json
 ```
 
+The same checks run automatically for every push and pull request. Missing generated
+runtime artifacts are informational; structural configuration errors fail the workflow.
+
 Generated kernels and externally stored model files are informational because they are normally not committed.
 Warnings identify portability or provenance concerns; `--strict` makes them fail the command. Structural errors
 always return a non-zero status. The validator uses only the Python standard library.

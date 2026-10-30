@@ -1,0 +1,20 @@
+name: Validate deployments
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile validator sources
+        run: python3 -m py_compile tools/validate_deployment.py tests/test_validate_deployment.py
+      - name: Run validator tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Validate tracked watershed deployments
+        run: python3 tools/validate_deployment.py
